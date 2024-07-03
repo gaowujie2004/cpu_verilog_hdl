@@ -11,7 +11,7 @@ module openmips (
 );
     // 第一部分：连接各个模块的传送线缆
 
-    // pc_reg与IF/ID流水寄存器相关线缆
+    // IF阶段
     wire[`InstAddrBus] if_pc;
     pc_reg pc_reg_0(
         .rst(rst),
@@ -22,7 +22,7 @@ module openmips (
     
     assign rom_addr_o = if_pc;  // wire型赋值，必须使用assign。
 
-    // IF/ID流水寄存器与ID相关线缆
+    // IF_ID寄存器
     wire[`InstAddrBus] id_pc_i;
     wire[`InstBus]     id_inst_i;
 
@@ -30,7 +30,8 @@ module openmips (
         .rst(rst), .clk(clk), 
         .if_pc(if_pc),
         .if_inst(rom_data_i), 
-        .id_pc(id_pc_i), //输出
+        //输出
+        .id_pc(id_pc_i), 
         .id_inst(id_inst_i)
     );
 
@@ -81,14 +82,13 @@ module openmips (
     );
     
      
-    // ID/EX与EX寄存器
+    // ID_EX寄存器
     wire[`AluSelBus]  ex_alusel_i;  /*ID/EX流水寄存器输出 && EX输入*/
     wire[`AluOpBus]   ex_aluop_i;
     wire[`RegBus]     ex_reg1_data_i;
     wire[`RegBus]     ex_reg2_data_i;
     wire[`RegAddrBus] ex_waddr_i;
     wire              ex_wreg_i;
-    
     id_ex id_ex_0(
         .rst(rst), .clk(clk), 
         .id_alusel(id_alusel_o), .id_aluop(id_aluop_o), 
@@ -101,7 +101,7 @@ module openmips (
     );
 
 
-    // EX与EX/MEM寄存器
+    // EX阶段
     wire[]  ex_waddr_o;
     wire[]  ex_reg_we_o;
     wire[]  ex_alu_res_o;
@@ -115,6 +115,7 @@ module openmips (
     );
 
 
+    // EX_MEM寄存器
     wire[`RegAddrBus]  mem_waddr_i;     
     wire               mem_reg_we_i;
     wire[`RegBus]      mem_alu_res_i;
