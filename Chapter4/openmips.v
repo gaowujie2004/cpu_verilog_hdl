@@ -20,7 +20,7 @@ module openmips (
         .ce(rom_ce_o)
     );
     
-    assign rom_addr_o = if_pc;  // wire型赋值，必须使用assign。
+    assign rom_addr_o = if_pc;  // TODO：wire型赋值，必须使用assign。
 
     // IF_ID寄存器
     wire[`InstAddrBus] id_pc_i;
@@ -54,8 +54,8 @@ module openmips (
         .rst(rst), .pc_i(id_pc_i), .inst_i(id_inst_i),
         // regfile模块的输出
         .reg1_data_i(id_reg1_data_i), .reg2_data_i(id_reg2_data_i),
-        // 送入流水寄存器
-        .alusel_o(id_alusel_o), // 输出
+        // 输出。送入流水寄存器
+        .alusel_o(id_alusel_o), 
         .aluop_o(id_aluop_o),
         .reg1_data_o(id_reg1_data_o),
         .reg2_data_o(id_reg2_data_o),
@@ -83,7 +83,7 @@ module openmips (
     
      
     // ID_EX寄存器
-    wire[`AluSelBus]  ex_alusel_i;  /*ID/EX流水寄存器输出 && EX输入*/
+    wire[`AluSelBus]  ex_alusel_i; 
     wire[`AluOpBus]   ex_aluop_i;
     wire[`RegBus]     ex_reg1_data_i;
     wire[`RegBus]     ex_reg2_data_i;
