@@ -3,8 +3,8 @@
 
 // 对 OpenMIPS_MIN_SOPC 进行 test bench，输入激励信号和时钟信号
 module openmips_min_sopc_tb();
-    reg CLOCK50;
-    reg rst;
+    reg CLOCK50;    // initial 语句块，必须是 reg 类型才能赋值
+    reg rst;    
 
     // 时钟信号：10ns翻转一次，时钟周期=20ns，时钟频率 50MHZ
     initial begin
