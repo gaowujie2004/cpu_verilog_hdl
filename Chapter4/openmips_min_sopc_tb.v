@@ -1,5 +1,4 @@
 `include "defines.v"
-`timescale 1ns/1ps
 
 // 对 OpenMIPS_MIN_SOPC 进行 test bench，输入激励信号和时钟信号
 module openmips_min_sopc_tb();
