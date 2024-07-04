@@ -11,7 +11,7 @@ module mem_wb (
 
     output reg[`RegAddrBus] wb_waddr,
     output reg              wb_reg_we,
-    output reg[`RegBus]     wb_data,        //写回阶段的指令要写入目的寄存器的值
+    output reg[`RegBus]     wb_data        //写回阶段的指令要写入目的寄存器的值
 );
     always @(posedge clk) begin
         // 同步复位

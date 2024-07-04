@@ -7,7 +7,7 @@ module openmips (
     input wire[`InstBus] rom_data_i,      // 指令存储器ROM输入的指令字
 
     output wire rom_ce_o,                 //ROM读使能
-    output wire[`InstAddrBus] rom_addr_o, //输出到ROM的地址
+    output wire[`InstAddrBus] rom_addr_o  //输出到ROM的地址
 );
     // 第一部分：连接各个模块的传送线缆
 
@@ -97,18 +97,18 @@ module openmips (
         //输出
         .ex_alusel(ex_alusel_i), .ex_aluop(ex_aluop_i), 
         .ex_reg1_data(ex_reg1_data_i), .ex_reg2_data(ex_reg2_data_i),
-        .ex_waddr(ex_waddr_i), .ex_reg_we(ex_wreg_i),
+        .ex_waddr(ex_waddr_i), .ex_reg_we(ex_wreg_i)
     );
 
 
     // EX阶段
-    wire[]  ex_waddr_o;
-    wire[]  ex_reg_we_o;
-    wire[]  ex_alu_res_o;
+    wire[`RegAddrBus]  ex_waddr_o;
+    wire               ex_reg_we_o;
+    wire[`RegBus]      ex_alu_res_o;
     ex ex_0(
         .rst(rst),
         .alusel_i(ex_alusel_i), .aluop_i(ex_aluop_i),
-        .reg1_data_i(ex_reg1_data_i), .reg1_data_i(ex_reg2_data_i),
+        .reg1_data_i(ex_reg1_data_i), .reg2_data_i(ex_reg2_data_i),
         .waddr_i(ex_waddr_i), .reg_we_i(ex_wreg_i),
         //输出
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o)
@@ -127,9 +127,9 @@ module openmips (
     );
 
     // MEM阶段
-    wire[]  mem_waddr_o;
-    wire[]  mem_reg_we_o;
-    wire[]  mem_alu_res_o;
+    wire[`RegAddrBus]  mem_waddr_o;
+    wire               mem_reg_we_o;
+    wire[`RegBus]      mem_alu_res_o;
     mem mem_0(
         .rst(rst),
         .waddr_i(mem_waddr_i), .reg_we_i(mem_reg_we_i), .alu_res_i(mem_alu_res_i),
@@ -143,14 +143,7 @@ module openmips (
         //输出
         .wb_waddr(wb_waddr_o), .wb_reg_we(wb_we_o), .wb_data(wb_wdata_o)
     );
-
-
-    always @(posedge clk) begin
-        if (rst == `RstEnable) begin
-            rom_ce_o <= `ReadDisable;
-            rom_addr_o <= `ZeroWord;
-        end
-    end
+    
 endmodule
 
 // Why：为什么不写到 always 语句块中了？

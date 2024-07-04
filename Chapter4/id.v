@@ -11,14 +11,14 @@ module id (
     
     output reg[`AluSelBus] alusel_o,        // 运算类型？            
     output reg[`AluOpBus]  aluop_o,         // TODO 不太理解运算子类型
-    output reg[`RegBus]    reg1_data_o      // 源操作数1(从regfile模块读取)
-    output reg[`RegBus]    reg2_data_o      // 源操作数2(从regfile模块读取)
-    output reg[`RegAddrBus]    waddr_o      // 目标寄存器地址
-    output reg                 wreg_o       // 写使能
+    output reg[`RegBus]    reg1_data_o,     // 源操作数1(从regfile模块读取)
+    output reg[`RegBus]    reg2_data_o,     // 源操作数2(从regfile模块读取)
+    output reg[`RegAddrBus]    waddr_o,     // 目标寄存器地址
+    output reg                 wreg_o,      // 写使能
     
     output reg reg1_read_o,                 // reg1读使能
     output reg reg2_read_o,                 // reg2读使能
-    output reg[`RegAddrBus]  reg1_addr_o    // 读reg1寄存器地址
+    output reg[`RegAddrBus]  reg1_addr_o,   // 读reg1寄存器地址
     output reg[`RegAddrBus]  reg2_addr_o    // 读reg2寄存器地址
     // Why: 为什么是reg类型？因为在 always 中赋值，就必须是reg类型，当然综合后可能是连线或寄存器。
 );
@@ -52,8 +52,8 @@ module id (
                 // I型指令：ori $rs, $rt, imm。  R[$rt] <- R[$r]s op u32(imm)
                 `EXE_ORI: begin
                     alusel_o  <= `EXE_RES_LOGIC;
-                    aluop_o   <= `EXE_ORI_OP;
-                    waddr     <= rt;
+                    aluop_o   <= `EXE_OR_OP;
+                    waddr_o   <= rt;
                     wreg_o    <= `WriteEnable;
                     instvalid <= 1'b1;
 

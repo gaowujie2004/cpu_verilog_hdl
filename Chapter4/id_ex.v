@@ -16,7 +16,7 @@ module id_ex (
     output reg[`RegBus]     ex_reg1_data,   //源操作数1
     output reg[`RegBus]     ex_reg2_data,   //源操作数2
     output reg[`RegAddrBus] ex_waddr,       //目标寄存器地址
-    output reg              ex_reg_we,      //目标寄存器写使能
+    output reg              ex_reg_we      //目标寄存器写使能
 );
 
     always @(posedge clk) begin

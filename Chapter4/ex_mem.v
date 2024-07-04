@@ -20,7 +20,7 @@ module ex_mem (
         if (rst == `RstEnable) begin
             mem_waddr <= `NOPRegAddr;
             mem_reg_we <= `WriteDisable;
-            mem_alu_res <= `ZeroWord
+            mem_alu_res <= `ZeroWord;
         end else begin 
             mem_waddr <= ex_waddr;
             mem_reg_we <= ex_reg_we;

@@ -13,7 +13,7 @@ module inst_control_signal (
     
     output wire jmp,
     output wire jr,
-    output wire jal,
+    output wire jal
 );
     wire[5:0] op    = inst_i[31:26];
     wire[5:0] func  = inst_i[5:0];
@@ -25,11 +25,6 @@ module inst_control_signal (
     reg instvalid;                  // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
 
 
-   case (op)
-        // I型指令：ori $rs, $rt, imm。  R[$rt] <- R[$r]s op u32(imm)
-        `EXE_ORI: begin
-            
-        end
-    endcase
+   
 
 endmodule

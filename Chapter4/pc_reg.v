@@ -9,9 +9,9 @@ module pc_reg (
 
     always @(posedge clk) begin
         if (rst == `RstEnable) begin
-            ce <= ChipDisable;
+            ce <= `ChipDisable;
         end else begin
-            ce <= ChipEnable;
+            ce <= `ChipEnable;
         end
     end
     
@@ -19,7 +19,7 @@ module pc_reg (
         if (ce == `ChipEnable) begin 
             pc <= pc + 4'h4;
         end else begin 
-            pc <= `InstAddrBus'b0;
+            pc <= `ZeroWord;
         end
     end
 

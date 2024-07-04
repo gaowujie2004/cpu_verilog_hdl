@@ -17,7 +17,7 @@ module regfile (
 
     //输出（寄存器值）
     output reg[`RegBus]     rdata1,
-    output reg[`RegBus]     rdata2,
+    output reg[`RegBus]     rdata2
 
     // Why: 我理解这里可以改成 wire 类型了。？
 );
@@ -37,7 +37,7 @@ module regfile (
     // 端口1读，读操作不依靠边沿信号
     always @(*) begin
         if (rst == `RstEnable || raddr1 == `NOPRegAddr) begin
-            raddr1 <= `ZeroWord;
+            rdata1 <= `ZeroWord;
         end else if (raddr1 == waddr && re1 == `ReadEnable && we == `WriteEnable) begin 
             // 读与写端口一致，且都使能，那么就直接将写入信息返回给读，当上升沿一到再写。
             rdata1 <= wdata;
@@ -51,7 +51,7 @@ module regfile (
      // 端口2读，读操作不依靠边沿信号
     always @(*) begin
         if (rst == `RstEnable || raddr2 == `NOPRegAddr) begin
-            raddr2 <= `ZeroWord;
+            rdata2 <= `ZeroWord;
         end else if (raddr2 == waddr && re2 == `ReadEnable && we == `WriteEnable) begin 
             // 读与写端口一致，且都使能，那么就直接将写入信息返回给读，当上升沿一到再写。
             rdata2 <= wdata;
