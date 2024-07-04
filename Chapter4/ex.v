@@ -11,7 +11,7 @@ module ex (
 
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能
-    output reg[`RegBus]     alu_res_o,       //运算结果
+    output reg[`RegBus]     alu_res_o      //运算结果
 );
     reg [`RegBus] logic_res;            //保存逻辑运算结果
 
@@ -42,6 +42,7 @@ module ex (
                 alu_res_o <= logic_res;
             end
             default: 
+                alu_res_o <= `ZeroWord;
         endcase
     end
 
