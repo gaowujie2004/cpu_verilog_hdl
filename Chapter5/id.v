@@ -83,7 +83,7 @@ module id (
         if (rst == `RstEnable) begin
             reg1_data_o <= `ZeroWord;
         end else if (reg1_read_o == `ReadEnable) begin
-            // TODO-think：此处存在优先级
+            // Think：此处存在优先级
             /*
                 ori $1, $0, 11
                 ori $1, $0, 22
