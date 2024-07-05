@@ -64,10 +64,8 @@ module id (
             reg2_data_o <= `ZeroWord;
 			imm32 <= 32'b0;	
         end else begin
-            wreg_o    <= `WriteDisable;
-            // 运算源操作数1提供
+            wreg_o      <= `WriteDisable;
             reg1_read_o <= `ReadDisable;
-            // 运算源操作数2提供
             reg2_read_o <= `ReadDisable; 
 
             case (op)
