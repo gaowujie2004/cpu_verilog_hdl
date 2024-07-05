@@ -191,7 +191,7 @@ module id (
                             end
                         endcase
                     end else begin
-                        // imm位移
+                        // imm位移、ssnop
                         case (func)
                             `FUNC_SLL, `FUNC_SSNOP: begin
                                 alusel_o  <= `ALU_RES_SHIFT;
