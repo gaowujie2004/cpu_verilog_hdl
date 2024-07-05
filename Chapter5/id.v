@@ -37,7 +37,7 @@ module id (
     wire[`RegAddrBus] rs = inst_i[25:21];
     wire[`RegAddrBus] rt = inst_i[20:16];
     wire[`RegAddrBus] rd = inst_i[15:11];
-    wire[10:6]     shamt = inst_i[10:6];
+    wire[4:0]      shamt = inst_i[10:6];
     wire[15:0]     imm16 = inst_i[15:0];   
     reg[`RegBus] imm32;             // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
     reg instvalid;                  // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
@@ -46,8 +46,8 @@ module id (
     // 第一段：指令译码，各种控制信号
     always @(*) begin
         if (rst == `RstEnable) begin
-            aluop_o <= `EXE_NOP_OP;
-			alusel_o <= `EXE_RES_NOP;
+            aluop_o <= `ALU_NOP_OP;
+			alusel_o <= `ALU_RES_NOP;
 			waddr_o <= `NOPRegAddr;
 			wreg_o <= `WriteDisable;
 			instvalid <= `InstValid;
@@ -59,11 +59,205 @@ module id (
             reg2_data_o <= `ZeroWord;
 			imm32 <= 32'b0;	
         end else begin
+            wreg_o    <= `WriteDisable;
+            // 运算源操作数1提供
+            reg1_read_o <= `ReadDisable;
+            // 运算源操作数2提供
+            reg2_read_o <= `ReadDisable; 
+
             case (op)
-                // I型指令：ori $rs, $rt, imm。  R[$rt] <- R[$r]s op u32(imm)
+                `OP_SPECIAL_INST: begin             // R型指令
+                    if (shamt == 5'b0) begin
+                        // 逻辑、reg位移、sync
+                        case (func)
+                            `FUNC_AND: begin
+                                alusel_o  <= `ALU_RES_LOGIC;
+                                aluop_o   <= `ALU_AND_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 运算源操作数2提供
+                                reg2_read_o <= `ReadEnable; 
+                                reg2_addr_o <= rt;
+                            end
+                            `FUNC_OR: begin
+                                alusel_o  <= `ALU_RES_LOGIC;
+                                aluop_o   <= `ALU_OR_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 运算源操作数2提供
+                                reg2_read_o <= `ReadEnable; 
+                                reg2_addr_o <= rt;
+                            end
+                            `FUNC_XOR: begin
+                                alusel_o  <= `ALU_RES_LOGIC;
+                                aluop_o   <= `ALU_XOR_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 运算源操作数2提供
+                                reg2_read_o <= `ReadEnable; 
+                                reg2_addr_o <= rt;
+                            end
+                            `FUNC_NOR: begin
+                                alusel_o  <= `ALU_RES_LOGIC;
+                                aluop_o   <= `ALU_NOR_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 运算源操作数2提供
+                                reg2_read_o <= `ReadEnable; 
+                                reg2_addr_o <= rt;
+                            end
+                            // 可变位移
+                            `FUNC_SLLV: begin
+                                alusel_o  <= `ALU_RES_SHIFT;
+                                aluop_o   <= `ALU_SLL_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供（位移改变）
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rt;
+                                // 运算源操作数2提供（位移改变）
+                                reg2_read_o <= `ReadEnable; 
+                                reg2_addr_o <= rs;
+                            end
+                            `FUNC_SRLV: begin
+                                alusel_o  <= `ALU_RES_SHIFT;
+                                aluop_o   <= `ALU_SRL_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供（位移改变）
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rt;
+                                // 运算源操作数2提供（位移改变）
+                                reg2_read_o <= `ReadEnable; 
+                                reg2_addr_o <= rs;
+                            end
+                            `FUNC_SRAV: begin
+                                alusel_o  <= `ALU_RES_SHIFT;
+                                aluop_o   <= `ALU_SRA_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供（位移改变）
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rt;
+                                // 运算源操作数2提供（位移改变）
+                                reg2_read_o <= `ReadEnable; 
+                                reg2_addr_o <= rs;
+                            end
+                            `FUNC_SYNC: begin
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_NOP_OP;
+                                waddr_o   <= `NOPRegAddr;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供
+                                reg1_read_o <= `ReadDisable;
+                                // 运算源操作数2提供
+                                reg2_read_o <= `ReadDisable; 
+                            end
+                            default: begin
+                                instvalid <= `False_v;
+                            end
+                        endcase
+                    end else begin
+                        // imm位移
+                        case (func)
+                            `FUNC_SLL: begin
+                                alusel_o  <= `ALU_RES_SHIFT;
+                                aluop_o   <= `ALU_SLL_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供（位移改变）
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rt;
+                                // 运算源操作数2提供（位移改变）
+                                reg2_read_o <= `ReadDisable; //不读寄存器
+                                imm32 <= {27'b0, shamt};
+                            end
+                            `FUNC_SRL: begin   //逻辑右移
+                                alusel_o  <= `ALU_RES_SHIFT;
+                                aluop_o   <= `ALU_SRL_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供（位移改变）
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rt;
+                                // 运算源操作数2提供（位移改变）
+                                reg2_read_o <= `ReadDisable; //不读寄存器
+                                imm32 <= {27'b0, shamt};
+                            end
+                            `FUNC_SRA:  begin
+                                alusel_o  <= `ALU_RES_SHIFT;
+                                aluop_o   <= `ALU_SRA_OP;
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                instvalid <= `True_v;
+
+                                // 运算源操作数1提供（位移改变）
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rt;
+                                // 运算源操作数2提供（位移改变）
+                                reg2_read_o <= `ReadDisable; //不读寄存器
+                                imm32 <= {27'b0, shamt};
+                            end
+
+                            default:  begin
+                                instvalid <= `False_v;
+                            end
+                        endcase
+                    end
+                end
+                /*
+                 * I型指令：ori $rs, $rt, imm。  
+                 * R[$rt] <- R[$rs] op u32(imm)
+                */
                 `OP_ORI: begin
-                    alusel_o  <= `EXE_RES_LOGIC;
-                    aluop_o   <= `EXE_OR_OP;
+                    alusel_o  <= `ALU_RES_LOGIC;
+                    aluop_o   <= `ALU_OR_OP;
+                    waddr_o   <= rt;
+                    wreg_o    <= `WriteEnable;
+                    instvalid <= `True_v;
+
+                    // 运算源操作数1提供
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    // 运算源操作数2提供
+                    reg2_read_o <= `ReadDisable;    //不读，来源于立即数
+                    imm32 = {16'b0, imm16};         //无符号扩展
+                end
+                `OP_ANDI: begin
+                    alusel_o  <= `ALU_RES_LOGIC;
+                    aluop_o   <= `ALU_AND_OP;
                     waddr_o   <= rt;
                     wreg_o    <= `WriteEnable;
                     instvalid <= 1'b1;
@@ -74,6 +268,49 @@ module id (
                     // 运算源操作数2提供
                     reg2_read_o <= `ReadDisable;    //不读，来源于立即数
                     imm32 = {16'b0, imm16};         //无符号扩展
+                end
+                `OP_XORI: begin
+                    alusel_o  <= `ALU_RES_LOGIC;
+                    aluop_o   <= `ALU_XOR_OP;
+                    waddr_o   <= rt;
+                    wreg_o    <= `WriteEnable;
+                    instvalid <= 1'b1;
+
+                    // 运算源操作数1提供
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    // 运算源操作数2提供
+                    reg2_read_o <= `ReadDisable;    //不读，来源于立即数
+                    imm32 = {16'b0, imm16};         //无符号扩展
+                end
+
+                `OP_LUI: begin
+                    alusel_o  <= `ALU_RES_LOGIC;
+                    aluop_o   <= `ALU_OR_OP;
+                    waddr_o   <= rt;
+                    wreg_o    <= `WriteEnable;
+                    instvalid <= 1'b1;
+
+                    // 运算源操作数1提供
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    // 运算源操作数2提供
+                    reg2_read_o <= `ReadDisable;    //不读，来源于立即数
+                    imm32 = {imm16, 16'b0};
+                end
+
+                `OP_PREF: begin
+                    alusel_o  <= `ALU_NOP_OP;
+                    aluop_o   <= `ALU_RES_NOP;
+                    wreg_o    <= `WriteDisable;
+                    instvalid <= 1'b1;
+
+                    reg1_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadDisable;
+                end
+
+                default: begin
+                    instvalid <= 1'b0;
                 end
             endcase
         end

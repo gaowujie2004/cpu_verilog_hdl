@@ -17,15 +17,19 @@
 
 
 //指令相关
-`define OP_AND  6'b100100
-`define OP_OR   6'b100101
-`define OP_XOR  6'b100110
-`define OP_NOR  6'b100111
-`define OP_ANDI 6'b001100
-`define OP_ORI  6'b001101
-`define OP_XORI 6'b001110
-`define OP_LUI  6'b001111
-    // 子功能
+// 指令码-OP字段
+`define OP_ORI    6'b001101
+`define OP_ANDI   6'b001100
+`define OP_XORI   6'b001110
+`define OP_LUI    6'b001111
+`define OP_PREF   6'b110011
+
+// 子功能-FUNC字段
+`define FUNC_AND  6'b100100
+`define FUNC_OR   6'b100101
+`define FUNC_XOR  6'b100110
+`define FUNC_NOR  6'b100111
+
 `define FUNC_SLL   6'b000000
 `define FUNC_SLLV  6'b000100
 `define FUNC_SRL   6'b000010
@@ -33,9 +37,7 @@
 `define FUNC_SRA   6'b000011
 `define FUNC_SRAV  6'b000111
 `define FUNC_SYNC  6'b001111
-`define FUNC_PREF  6'b110011
 `define FUNC_NOP   6'b000000
-`define SSNOP      32'b00000000000000000000000001000000
 
 `define OP_SPECIAL_INST  6'b000000
 `define OP_REGIMM_INST   6'b000001
@@ -43,11 +45,21 @@
 
 
 // AluOp
-`define EXE_OR_OP    8'b00100101
-`define EXE_NOP_OP   8'b00000000
+`define ALU_AND_OP   8'b00100100
+`define ALU_OR_OP    8'b00100101
+`define ALU_XOR_OP   8'b00100110
+`define ALU_NOR_OP   8'b00100111
+
+`define ALU_SLL_OP   8'b01111100
+`define ALU_SRL_OP   8'b00000010
+`define ALU_SRA_OP   8'b00000011
+
+`define ALU_NOP_OP   8'b00000000
 // AluSel
-`define EXE_RES_LOGIC 3'b001            //逻辑运算
-`define EXE_RES_NOP 3'b000              
+`define ALU_RES_LOGIC 3'b001         //逻辑运算
+`define ALU_RES_SHIFT 3'b010         //位移运算
+
+`define ALU_RES_NOP   3'b000         
 
 
 //指令存储器相关
