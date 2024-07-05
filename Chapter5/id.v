@@ -260,7 +260,7 @@ module id (
                     aluop_o   <= `ALU_AND_OP;
                     waddr_o   <= rt;
                     wreg_o    <= `WriteEnable;
-                    instvalid <= 1'b1;
+                    instvalid <= `True_v;
 
                     // 运算源操作数1提供
                     reg1_read_o <= `ReadEnable;
@@ -274,7 +274,7 @@ module id (
                     aluop_o   <= `ALU_XOR_OP;
                     waddr_o   <= rt;
                     wreg_o    <= `WriteEnable;
-                    instvalid <= 1'b1;
+                    instvalid <= `True_v;
 
                     // 运算源操作数1提供
                     reg1_read_o <= `ReadEnable;
@@ -289,11 +289,11 @@ module id (
                     aluop_o   <= `ALU_OR_OP;
                     waddr_o   <= rt;
                     wreg_o    <= `WriteEnable;
-                    instvalid <= 1'b1;
+                    instvalid <= `True_v;
 
                     // 运算源操作数1提供
                     reg1_read_o <= `ReadEnable;
-                    reg1_addr_o <= rs;
+                    reg1_addr_o <= rs;  //00000
                     // 运算源操作数2提供
                     reg2_read_o <= `ReadDisable;    //不读，来源于立即数
                     imm32 = {imm16, 16'b0};
@@ -303,14 +303,14 @@ module id (
                     alusel_o  <= `ALU_NOP_OP;
                     aluop_o   <= `ALU_RES_NOP;
                     wreg_o    <= `WriteDisable;
-                    instvalid <= 1'b1;
+                    instvalid <= `True_v;
 
                     reg1_read_o <= `ReadDisable;
                     reg2_read_o <= `ReadDisable;
                 end
 
                 default: begin
-                    instvalid <= 1'b0;
+                    instvalid <= `False_v;
                 end
             endcase
         end
