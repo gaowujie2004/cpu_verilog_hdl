@@ -59,6 +59,7 @@ module openmips (
     wire[`RegAddrBus] id_reg1_addr_o;
     wire              id_reg2_read_o;
     wire[`RegAddrBus] id_reg2_addr_o;
+    wire[`InstBus]    id_inst_o;
     id id_0(
         .rst(rst), .pc_i(id_pc_i), .inst_i(id_inst_i),
         // regfile模块的输出
@@ -78,7 +79,9 @@ module openmips (
         .reg1_read_o(id_reg1_read_o),
         .reg1_addr_o(id_reg1_addr_o),
         .reg2_read_o(id_reg2_read_o),
-        .reg2_addr_o(id_reg2_addr_o)
+        .reg2_addr_o(id_reg2_addr_o),
+        //调试目的
+        .inst_o(id_inst_o)
     );
 
     // refile
@@ -102,21 +105,23 @@ module openmips (
     wire[`RegBus]     ex_reg2_data_i;
     wire[`RegAddrBus] ex_waddr_i;
     wire              ex_wreg_i;
+    wire[`InstBus]    ex_inst_i;
     id_ex id_ex_0(
-        .rst(rst), .clk(clk), 
+        .rst(rst), .clk(clk), .id_inst(id_inst_o),
         .id_alusel(id_alusel_o), .id_aluop(id_aluop_o), 
         .id_reg1_data(id_reg1_data_o), .id_reg2_data(id_reg2_data_o),
         .id_waddr(id_waddr_o), .id_reg_we(id_wreg_o),
         //输出
         .ex_alusel(ex_alusel_i), .ex_aluop(ex_aluop_i), 
         .ex_reg1_data(ex_reg1_data_i), .ex_reg2_data(ex_reg2_data_i),
-        .ex_waddr(ex_waddr_i), .ex_reg_we(ex_wreg_i)
+        .ex_waddr(ex_waddr_i), .ex_reg_we(ex_wreg_i),
+        .ex_inst(ex_inst_i)
     );
 
 
     // EX阶段
     ex ex_0(
-        .rst(rst),
+        .rst(rst), .inst_i(ex_inst_i),
         .alusel_i(ex_alusel_i), .aluop_i(ex_aluop_i),
         .reg1_data_i(ex_reg1_data_i), .reg2_data_i(ex_reg2_data_i),
         .waddr_i(ex_waddr_i), .reg_we_i(ex_wreg_i),

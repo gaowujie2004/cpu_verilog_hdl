@@ -4,6 +4,7 @@
 module id_ex (
     input wire rst,
     input wire clk,
+    input wire[`InstBus]    id_inst,        //调试目的
     input wire[`AluSelBus]  id_alusel,
     input wire[`AluOpBus]   id_aluop,
     input wire[`RegBus]     id_reg1_data,   //源操作数1
@@ -16,7 +17,8 @@ module id_ex (
     output reg[`RegBus]     ex_reg1_data,   //源操作数1
     output reg[`RegBus]     ex_reg2_data,   //源操作数2
     output reg[`RegAddrBus] ex_waddr,       //目标寄存器地址
-    output reg              ex_reg_we      //目标寄存器写使能
+    output reg              ex_reg_we,      //目标寄存器写使能
+    output reg[`InstBus]    ex_inst         //调试目的
 );
 
     always @(posedge clk) begin
@@ -28,13 +30,15 @@ module id_ex (
 			ex_reg2_data <= `ZeroWord;
 			ex_waddr <= `NOPRegAddr;
 			ex_reg_we <= `WriteDisable;
+            ex_inst  <= `ZeroWord;
         end else begin 
 			ex_alusel <= id_alusel;
             ex_aluop <= id_aluop;
 			ex_reg1_data <= id_reg1_data;
 			ex_reg2_data <= id_reg2_data;
 			ex_waddr <= id_waddr;
-			ex_reg_we <= id_reg_we;		
+			ex_reg_we <= id_reg_we;	
+            ex_inst  <= id_inst;
         end
     end
     

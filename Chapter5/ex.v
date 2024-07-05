@@ -2,6 +2,7 @@
 
 module ex (
     input wire rst,
+    input wire[`InstBus]    inst_i,        //用于调试
     input wire[`AluSelBus]  alusel_i,
     input wire[`AluOpBus]   aluop_i,
     input wire[`RegBus]     reg1_data_i,   //源操作数1
