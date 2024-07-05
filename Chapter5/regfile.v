@@ -11,9 +11,9 @@ module regfile (
 
     //读
     input wire[`RegAddrBus] raddr1,
-    input wire[`RegBus]     re1,   //端口1读使能
+    input wire              re1,   //端口1读使能
     input wire[`RegAddrBus] raddr2,
-    input wire[`RegBus]     re2,   //端口2读使能
+    input wire              re2,   //端口2读使能
 
     //输出（寄存器值）
     output reg[`RegBus]     rdata1,
