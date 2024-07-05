@@ -11,6 +11,10 @@
         "Why": {
             "background": "#f79204",
             "icon": "issue",
+        },
+        "Think": {
+            "background": "#17b5f9",
+            "icon": "issue",
         }
     },
     "todo-tree.general.tags": [
@@ -20,6 +24,7 @@
         "TODO",
         "[ ]",
         "[x]",
-        "Why"
+        "Why",
+        "Think"
     ]
 }
