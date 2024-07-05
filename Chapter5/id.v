@@ -173,7 +173,7 @@ module id (
                                 alusel_o  <= `ALU_RES_NOP;
                                 aluop_o   <= `ALU_NOP_OP;
                                 waddr_o   <= `NOPRegAddr;
-                                wreg_o    <= `WriteEnable;
+                                wreg_o    <= `WriteDisable;
                                 instvalid <= `True_v;
 
                                 // 运算源操作数1提供
