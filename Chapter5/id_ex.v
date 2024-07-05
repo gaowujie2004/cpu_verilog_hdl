@@ -22,8 +22,8 @@ module id_ex (
     always @(posedge clk) begin
         // 同步复位
         if (rst == `RstEnable) begin
-			ex_alusel <= `EXE_RES_NOP;
-            ex_aluop <= `EXE_NOP_OP;
+			ex_alusel <= `ALU_RES_NOP;
+            ex_aluop <= `ALU_NOP_OP;
 			ex_reg1_data <= `ZeroWord;
 			ex_reg2_data <= `ZeroWord;
 			ex_waddr <= `NOPRegAddr;

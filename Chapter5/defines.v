@@ -45,8 +45,8 @@
 
 
 // AluOp
-`define ALU_AND_OP   8'b00100100
 `define ALU_OR_OP    8'b00100101
+`define ALU_AND_OP   8'b00100100
 `define ALU_XOR_OP   8'b00100110
 `define ALU_NOR_OP   8'b00100111
 
