@@ -17,6 +17,7 @@ module id (
     input wire[`RegAddrBus]  ex_waddr_i     // ex阶段输出
     input wire[`RegBus]      ex_wdata_i     // ex阶段输出
     
+    // 流水寄存器保存
     output reg[`AluSelBus] alusel_o,        // 运算类型？            
     output reg[`AluOpBus]  aluop_o,         // TODO 不太理解运算子类型
     output reg[`RegBus]    reg1_data_o,     // 源操作数1(从regfile模块读取)
@@ -24,6 +25,7 @@ module id (
     output reg[`RegAddrBus]    waddr_o,     // 目标寄存器地址
     output reg                 wreg_o,      // 写使能
     
+    // 传送给Refile模块
     output reg reg1_read_o,                 // reg1读使能
     output reg reg2_read_o,                 // reg2读使能
     output reg[`RegAddrBus]  reg1_addr_o,   // 读reg1寄存器地址
