@@ -18,11 +18,10 @@ module regfile (
     //输出（寄存器值）
     output reg[`RegBus]     rdata1,
     output reg[`RegBus]     rdata2
-
-    // Why: 我理解这里可以改成 wire 类型了。？
+    // Why: rdata1、rdata2 不能是wire，因为在 always 只能对reg变量赋值
 );
 
-    // Why: 注意，这里0:RegNum-1，为什么啊？后面声明的是个数。
+    // Why: 注意，这里0:RegNum-1，这是声明个数，这样写也是可以的
     reg[`RegBus] regfile[0:`RegNum-1];
     
     // 写
