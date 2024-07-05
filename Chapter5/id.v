@@ -37,6 +37,7 @@ module id (
     wire[`RegAddrBus] rs = inst_i[25:21];
     wire[`RegAddrBus] rt = inst_i[20:16];
     wire[`RegAddrBus] rd = inst_i[15:11];
+    wire[10:6]     shamt = inst_i[10:6];
     wire[15:0]     imm16 = inst_i[15:0];   
     reg[`RegBus] imm32;             // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
     reg instvalid;                  // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
@@ -60,7 +61,7 @@ module id (
         end else begin
             case (op)
                 // I型指令：ori $rs, $rt, imm。  R[$rt] <- R[$r]s op u32(imm)
-                `EXE_ORI: begin
+                `OP_ORI: begin
                     alusel_o  <= `EXE_RES_LOGIC;
                     aluop_o   <= `EXE_OR_OP;
                     waddr_o   <= rt;

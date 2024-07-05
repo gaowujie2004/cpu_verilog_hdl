@@ -17,30 +17,29 @@
 
 
 //指令相关
-`define EXE_AND  6'b100100
-`define EXE_OR   6'b100101
-`define EXE_XOR  6'b100110
-`define EXE_NOR  6'b100111
-`define EXE_ANDI 6'b001100
-`define EXE_ORI  6'b001101
-`define EXE_XORI 6'b001110
-`define EXE_LUI  6'b001111
+`define OP_AND  6'b100100
+`define OP_OR   6'b100101
+`define OP_XOR  6'b100110
+`define OP_NOR  6'b100111
+`define OP_ANDI 6'b001100
+`define OP_ORI  6'b001101
+`define OP_XORI 6'b001110
+`define OP_LUI  6'b001111
+    // 子功能
+`define FUNC_SLL   6'b000000
+`define FUNC_SLLV  6'b000100
+`define FUNC_SRL   6'b000010
+`define FUNC_SRLV  6'b000110
+`define FUNC_SRA   6'b000011
+`define FUNC_SRAV  6'b000111
+`define FUNC_SYNC  6'b001111
+`define FUNC_PREF  6'b110011
+`define FUNC_NOP   6'b000000
+`define SSNOP      32'b00000000000000000000000001000000
 
-`define EXE_SLL   6'b000000
-`define EXE_SLLV  6'b000100
-`define EXE_SRL   6'b000010
-`define EXE_SRLV  6'b000110
-`define EXE_SRA   6'b000011
-`define EXE_SRAV  6'b000111
-`define EXE_SYNC  6'b001111
-`define EXE_PREF  6'b110011
-
-`define EXE_NOP 6'b000000
-`define SSNOP 32'b00000000000000000000000001000000
-
-`define EXE_SPECIAL_INST 6'b000000
-`define EXE_REGIMM_INST 6'b000001
-`define EXE_SPECIAL2_INST 6'b011100
+`define OP_SPECIAL_INST  6'b000000
+`define OP_REGIMM_INST   6'b000001
+`define OP_SPECIAL2_INST 6'b011100
 
 
 // AluOp
