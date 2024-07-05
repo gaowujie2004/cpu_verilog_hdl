@@ -45,9 +45,11 @@ module ex (
                     shift_res <= reg1_data_i >> shift_count;    
                 end
                 `ALU_SRA_OP: begin
-                    shift_res <= reg1_data_i >>> shift_count;    
+                    shift_res <= $signed(reg1_data_i) >>> shift_count;
+                    // 算术右移
+                    // {`RegBus{reg1_data_i[`RegBus-1]}}
+                    $display("sra： data1: %h, data2: %h, res: %h", reg1_data_i, shift_count, $signed(reg1_data_i) >>> shift_count);
                 end
-
                 `ALU_NOP_OP: begin
                     logic_res <= `ZeroWord;
                     shift_res <= `ZeroWord;
