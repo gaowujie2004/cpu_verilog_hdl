@@ -45,7 +45,16 @@ module openmips (
     wire[`RegAddrBus] id_waddr_o;
     wire              id_wreg_o;
 
-    // ID阶段
+    // ID阶段      
+    wire[`RegAddrBus]  ex_waddr_o;     // EX阶段，数据转发
+    wire               ex_reg_we_o;
+    wire[`RegBus]      ex_alu_res_o;
+
+        
+    wire[`RegAddrBus]  mem_waddr_o;    // MEM阶段，数据转发
+    wire               mem_reg_we_o;
+    wire[`RegBus]      mem_alu_res_o;
+
     wire              id_reg1_read_o;  //送入regfile模块
     wire[`RegAddrBus] id_reg1_addr_o;
     wire              id_reg2_read_o;
@@ -106,9 +115,6 @@ module openmips (
 
 
     // EX阶段
-    wire[`RegAddrBus]  ex_waddr_o;
-    wire               ex_reg_we_o;
-    wire[`RegBus]      ex_alu_res_o;
     ex ex_0(
         .rst(rst),
         .alusel_i(ex_alusel_i), .aluop_i(ex_aluop_i),
@@ -131,9 +137,6 @@ module openmips (
     );
 
     // MEM阶段
-    wire[`RegAddrBus]  mem_waddr_o;
-    wire               mem_reg_we_o;
-    wire[`RegBus]      mem_alu_res_o;
     mem mem_0(
         .rst(rst),
         .waddr_i(mem_waddr_i), .reg_we_i(mem_reg_we_i), .alu_res_i(mem_alu_res_i),
