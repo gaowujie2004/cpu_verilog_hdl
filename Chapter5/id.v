@@ -174,7 +174,7 @@ module id (
                                 reg2_read_o <= `ReadEnable; 
                                 reg2_addr_o <= rs;
                             end
-                            `FUNC_SYNC: begin
+                            `FUNC_SYNC, `FUNC_NOP: begin
                                 alusel_o  <= `ALU_RES_NOP;
                                 aluop_o   <= `ALU_NOP_OP;
                                 waddr_o   <= `NOPRegAddr;
@@ -193,7 +193,7 @@ module id (
                     end else begin
                         // imm位移
                         case (func)
-                            `FUNC_SLL: begin
+                            `FUNC_SLL, `FUNC_SSNOP: begin
                                 alusel_o  <= `ALU_RES_SHIFT;
                                 aluop_o   <= `ALU_SLL_OP;
                                 waddr_o   <= rd;

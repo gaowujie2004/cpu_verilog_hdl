@@ -42,7 +42,7 @@ module ex (
                     shift_res <= reg1_data_i << shift_count;    
                 end
                 `ALU_SRL_OP: begin
-                    shift_res <= reg1_data_i >>> shift_count;    
+                    shift_res <= reg1_data_i >> shift_count;    
                 end
                 `ALU_SRA_OP: begin
                     shift_res <= reg1_data_i >>> shift_count;    

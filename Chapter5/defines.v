@@ -38,6 +38,7 @@
 `define FUNC_SRAV  6'b000111
 `define FUNC_SYNC  6'b001111
 `define FUNC_NOP   6'b000000
+`define FUNC_SSNOP 6'b000000
 
 `define OP_SPECIAL_INST  6'b000000
 `define OP_REGIMM_INST   6'b000001
