@@ -335,7 +335,7 @@ module id (
             //如果Regfile模块读端⼝1要读取的寄存器就是执⾏阶段要写的⽬的寄存器，那么直接把执⾏阶段的结果ex_wdata_i作为reg1_o的值;
             if (ex_wreg_i==`WriteEnable && ex_waddr_i==reg1_addr_o) begin
                 reg1_data_o <= ex_wdata_i;
-            end else if (mem_wreg_i==`WriteEnable && mem_wdata_i==reg1_addr_o) begin
+            end else if (mem_wreg_i==`WriteEnable && mem_waddr_i==reg1_addr_o) begin
                 reg1_data_o <= mem_wdata_i;
             end else begin
                 // 不存在数据相关，从Regfile读
@@ -355,7 +355,7 @@ module id (
             if (ex_wreg_i==`WriteEnable && ex_waddr_i==reg2_addr_o) begin
                 //如果Regfile模块读端⼝2要读取的寄存器就是执⾏阶段要写的⽬的寄存器，那么直接把执⾏阶段的结果ex_wdata_i作为reg2_o的值;
                 reg2_data_o <= ex_wdata_i;
-            end else if (mem_wreg_i==`WriteEnable && mem_wdata_i==reg2_addr_o) begin
+            end else if (mem_wreg_i==`WriteEnable && mem_waddr_i==reg2_addr_o) begin
                 //如果Regfile模块读端⼝2要读取的寄存器就是访存阶段要写的⽬的寄存器，那么直接把访存阶段的结果mem_wdata_i作为reg2_o的值;
                 reg2_data_o <= mem_wdata_i;
             end else begin
