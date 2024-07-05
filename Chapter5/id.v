@@ -10,12 +10,12 @@ module id (
     input wire[`RegBus] reg2_data_i,        // 从regfile读的数据
 
     // 数据旁路(数据前推)
-    input wire               mem_wreg_i     // MEM阶段输出
-    input wire[`RegAddrBus]  mem_waddr_i    // MEM阶段输出
-    input wire[`RegBus]      mem_wdata_i    // MEM阶段输出
-    input wire               ex_wreg_i      // ex阶段输出
-    input wire[`RegAddrBus]  ex_waddr_i     // ex阶段输出
-    input wire[`RegBus]      ex_wdata_i     // ex阶段输出
+    input wire               mem_wreg_i,    // MEM阶段输出
+    input wire[`RegAddrBus]  mem_waddr_i,   // MEM阶段输出
+    input wire[`RegBus]      mem_wdata_i,   // MEM阶段输出
+    input wire               ex_wreg_i,     // ex阶段输出
+    input wire[`RegAddrBus]  ex_waddr_i,    // ex阶段输出
+    input wire[`RegBus]      ex_wdata_i,    // ex阶段输出
     
     // 流水寄存器保存
     output reg[`AluSelBus] alusel_o,        // 运算类型？            
