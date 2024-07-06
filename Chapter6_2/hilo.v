@@ -42,6 +42,14 @@ module hilo (
         if (rst == `RstEnable) begin
             lo_o <= `ZeroWord;
         end else begin
+            /*
+                转发优先级：
+                mthi $0
+                mthi $1
+                mthi $2
+                mfhi $4
+                第4条指令读Hi，第1~3条指令写Hi，那肯定是读第3条指令的写入数据，所以应该先转发MEM、后WB
+            */
             if (mem_hi_we_i==`WriteEnable) begin
                 /*
                 mthi $1         Hi    <- R[$1]   写Hi
@@ -65,7 +73,7 @@ module hilo (
                 nop
                 nop
                 mfhi $4         R[$4] <- Hi      读Hi
-                说明：无数据相关问题，前面指令对hi进行写已经完成了
+                说明：无数据相关问题，前面指令（第一条指令）对hi的写已经完成了
                 */
                 hi_o <= hi;
             end
