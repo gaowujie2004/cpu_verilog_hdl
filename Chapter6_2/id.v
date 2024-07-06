@@ -176,6 +176,81 @@ module id (
                                 // 运算源操作数2提供
                                 reg2_read_o <= `ReadDisable; 
                             end
+
+                            `FUNC_MOVN: begin
+                                instvalid <= `True_v;
+                                alusel_o <= `ALU_RES_MOV;
+                                aluop_o  <= `ALU_MOVN_OP;
+                                //写控制
+                                waddr_o  <= rd;
+                                //Think: 感觉使用reg2_data_o不合理，故而使用reg2_data_i（regfile已经做转发处理了）
+                                wreg_o   <= reg2_data_i != `ZeroWord ? `WriteEnable : `WriteDisable;    
+                                //读1
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;
+                            end
+                            `FUNC_MOVZ: begin
+                                instvalid <= `True_v;
+                                alusel_o <= `ALU_RES_MOV;
+                                aluop_o  <= `ALU_MOVZ_OP;
+                                //写控制
+                                waddr_o  <= rd;
+                                //Think: 感觉使用reg2_data_o不合理，故而使用reg2_data_i（regfile已经做转发处理了）
+                                wreg_o   <= reg2_data_i == `ZeroWord ? `WriteEnable : `WriteDisable; 
+                                //读1
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;
+                            end
+
+                            `FUNC_MFHI: begin       //mfhi rd, R[rd] <- Hi
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_MOV;
+                                aluop_o   <= `ALU_MFHI_OP;
+                                //写控制
+                                waddr_o  <= rd;
+                                wreg_o   <= `WriteEnable;
+                                //读1、2控制
+                                reg1_read_o <= `ReadDisable;
+                                reg2_read_o <= `ReadDisable;
+                            end
+                            `FUNC_MFLO: begin       //mflo rd, R[rd] <- Lo
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_MOV;
+                                aluop_o   <= `ALU_MFLO_OP;
+                                //写控制
+                                waddr_o  <= rd;
+                                wreg_o   <= `WriteEnable;
+                                //读1、2控制
+                                reg1_read_o <= `ReadDisable;
+                                reg2_read_o <= `ReadDisable;
+                            end
+                            `FUNC_MTHI: begin       //mthi rs, Hi <- R[rs]
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_MTHI_OP;
+                                //写控制
+                                wreg_o   <= `WriteDisable;
+                                //读1、2控制
+                                reg1_read_o <= `ReadEnable;
+                                reg2_read_o <= `ReadDisable;
+                            end
+                            `FUNC_MTLO: begin       //mtlo rs, Lo <- R[rs]
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_MTLO_OP;
+                                //写控制
+                                wreg_o   <= `WriteDisable;
+                                //读1、2控制
+                                reg1_read_o <= `ReadEnable;
+                                reg2_read_o <= `ReadDisable;
+                            end
+
                             default: begin
                                 instvalid <= `False_v;
                             end
