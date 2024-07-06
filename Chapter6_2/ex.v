@@ -73,7 +73,7 @@ module ex (
                     move_res <= lo_i;
                 end
 
-                `ALU_NOP_OP: begin
+                default, `ALU_NOP_OP: begin
                     logic_res <= `ZeroWord;
                     shift_res <= `ZeroWord;
                     move_res  <= `ZeroWord;
