@@ -34,8 +34,8 @@ module regfile (
     // 写
     always @(posedge clk) begin
         if (rst == `RstDisable) begin
-            if (we == `WriteEnable && waddr != `NOPRegAddr) begin
-                regfile[waddr] <= wdata;
+            if (wb_wreg_i==`WriteEnable && wb_waddr_i!=`NOPRegAddr) begin
+                regfile[wb_waddr_i] <= wb_wdata_i;
             end
         end 
     end
