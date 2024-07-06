@@ -1,26 +1,62 @@
 module hilo (
     wire rst,
     input wire clk,
-    input wire hi_we_i,
-    input wire lo_we_i,
-    input wire[`RegBus] hi_i,           //写入hi寄存器的数据
-    input wire[`RegBus] lo_i,           //写入lo寄存器的数据
+
+    input wire          wb_hi_we_i,     //Wb阶段
+    input wire          wb_lo_we_i,     //WB阶段
+    input wire[`RegBus] wb_hi_i,        //WB阶段，写入hi寄存器的数据
+    input wire[`RegBus] wb_lo_i,        //WB阶段，写入lo寄存器的数据
+
+    input wire          mem_hi_we_i,    //MEM阶段
+    input wire          mem_lo_we_i,    //MEM阶段
+    input wire[`RegBus] mem_hi_i,       //MEM阶段，写入hi寄存器的数据
+    input wire[`RegBus] mem_lo_i,       //MEM阶段，写入lo寄存器的数据
 
     output reg[`RegBus] hi_o,           //读出hi寄存器的数据
     output reg[`RegBus] lo_o            //读出lo寄存器的数据
 );
+    reg[`RegBus] hi;
+    reg[`RegBus] lo;
+
+    // 写
     always @(posedge clk) begin
         if (rst == `RstEnable) begin 
-            hi_o <= `ZeroWord; 
-            lo_o <= `ZeroWord; 
+            hi <= `ZeroWord; 
+            lo <= `ZeroWord; 
         end else begin 
-            if (hi_we_i == `WriteEnable) begin
-                hi_o <= hi_i; 
+            if (wb_hi_we_i == `WriteEnable) begin
+                hi <= wb_hi_i; 
             end 
             
-            if (lo_we_i == `WriteEnable) begin
-                lo_o <= lo_i;
+            if (wb_lo_we_i == `WriteEnable) begin
+                lo <= wb_lo_i;
             end
         end
     end
+
+    /*
+        Hi数据转发：前面指令向 Hi 写入，但还在MEM阶段，此时又要读
+    */
+    always @(*) begin
+        if (mem_hi_we_i==`WriteEnable) begin
+            /*
+               mthi $1         Hi    <- R[$1]   写Hi
+               mfhi $4         R[$4] <- Hi      读Hi
+               问题：当最后一条指令在 EX 阶段时，第一条指令在 MEM 阶段
+               解决（数据转发）：将第一条指令的写入Hi的数据，作为输出
+            */
+            hi_o <= mem_hi_i;
+        end else if (wb_hi_we_i == `WriteEnable) begin
+            /*
+               mthi $1         Hi    <- R[$1]   写Hi
+               nop
+               mfhi $4         R[$4] <- Hi      读Hi
+               问题：当最后一条指令在执行阶段时，nop在访存阶段，写Hi在写会阶段，但要等写回阶段结束后下一个时钟上升才能写入
+               解决（数据转发）：先输出，随后上升沿一到再写入内部的 hi 寄存器。
+            */
+            hi_o <= wb_hi_i;
+        end
+    end
+
+
 endmodule
