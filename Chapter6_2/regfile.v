@@ -4,18 +4,17 @@
 module regfile (
     input wire rst,
     input wire clk,
-    // 数据旁路(数据前推)
+    // 写（写回阶段传递的）
+    input wire              wb_wreg_i,      //WB阶段，写使能
+    input wire[`RegAddrBus] wb_waddr_i,     //WB阶段，目的寄存器地址
+    input wire[`RegBus]     wb_wdata_i,     //WB阶段，目的寄存器数据
+    // 数据旁路(数据前推)，也相当于写数据
     input wire               mem_wreg_i,    // MEM阶段输出
     input wire[`RegAddrBus]  mem_waddr_i,   // MEM阶段输出
     input wire[`RegBus]      mem_wdata_i,   // MEM阶段输出
     input wire               ex_wreg_i,     // EX阶段输出
     input wire[`RegAddrBus]  ex_waddr_i,    // EX阶段输出
     input wire[`RegBus]      ex_wdata_i,    // EX阶段输出
-
-    // 写（写回阶段传递的）
-    input wire[`RegAddrBus] waddr,
-    input wire[`RegBus]     wdata,
-    input wire              we,    //写使能
 
     //读
     input wire[`RegAddrBus] raddr1,
@@ -58,7 +57,7 @@ module regfile (
                 rdata1 <= ex_wdata_i;
             end else if (mem_wreg_i==`WriteEnable && mem_waddr_i==raddr1) begin
                 rdata1 <= mem_wdata_i;
-            end else if (we == `WriteEnable && raddr1 == waddr) begin   //WB阶段的信息
+            end else if (wb_wreg_i == `WriteEnable && wb_waddr_i==raddr1) begin   //WB阶段的信息
                 //数据转发：译码读、写回阶段写，，写入的是WB阶段的信息
                 //此时读与写端口一致，且都使能，那么就直接将写入信息返回给读，当上升沿一到再写。
                 rdata1 <= wdata;
@@ -90,7 +89,7 @@ module regfile (
             end else if (mem_wreg_i==`WriteEnable && mem_waddr_i==raddr2) begin
                 // 数据转发：访存阶段
                 rdata2 <= mem_wdata_i;
-            end else if (we == `WriteEnable &&  waddr == raddr2 )begin
+            end else if (wb_wreg_i == `WriteEnable && wb_waddr_i==raddr2 )begin
                 //数据转发：译码读、写回阶段写，此时读与写端口一致，且都使能，那么就直接将写入信息返回给读，当上升沿一到再写。
                 rdata2 <= wdata;
             end begin

@@ -87,12 +87,12 @@ module openmips (
     wire[`RegBus]      wb_wdata_o;
     regfile regfile_0(
         .rst(rst), .clk(clk),
-        // 数据前推(数据旁路)MEM、ID阶段的结果
+        .wb_waddr_i(wb_waddr_o), .wb_wreg_i(wb_we_o), .wb_wdata_i(wb_wdata_o), //写端口
+        // 数据前推(数据旁路)MEM、ID阶段的结果，也相当于写
         .mem_wreg_i(mem_reg_we_o), .mem_waddr_i(mem_waddr_o), .mem_wdata_i(mem_alu_res_o),
         .ex_wreg_i(ex_reg_we_o),  .ex_waddr_i(ex_waddr_o),  .ex_wdata_i(ex_alu_res_o),
         .raddr1(id_reg1_addr_o), .re1(id_reg1_read_o), //端口1读
         .raddr2(id_reg2_addr_o), .re2(id_reg2_read_o), //端口2读
-        .waddr(wb_waddr_o), .we(wb_we_o), .wdata(wb_wdata_o), //写端口
         //输出
         .rdata1(id_reg1_data_i), .rdata2(id_reg2_data_i)
     );
