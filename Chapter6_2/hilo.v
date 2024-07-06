@@ -84,7 +84,7 @@ module hilo (
                 lo_o <= mem_lo_i;
             end else if (wb_lo_we_i == `WriteEnable) begin
                 //和hi一样
-                lo <= wb_lo_i;
+                lo_o <= wb_lo_i;
             end else begin
                 //和hi一样
                 lo_o <= lo;
