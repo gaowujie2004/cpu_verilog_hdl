@@ -9,9 +9,6 @@ module hilo (
     output reg[`RegBus] hi_o,           //读出hi寄存器的数据
     output reg[`RegBus] lo_o            //读出lo寄存器的数据
 );
-
-    
-
     always @(posedge clk) begin
         if (rst == `RstEnable) begin 
             hi_o <= `ZeroWord; 
