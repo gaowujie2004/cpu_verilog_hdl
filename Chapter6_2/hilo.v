@@ -49,6 +49,7 @@ module hilo (
                 mthi $2
                 mfhi $4
                 第4条指令读Hi，第1~3条指令写Hi，那肯定是读第3条指令的写入数据，所以应该先转发MEM、后WB
+                因为：第4条指令在EX阶段，第3条指令在MEM阶段，第2条指令在WB阶段；第1条指令结束，已经写入Hi
             */
             if (mem_hi_we_i==`WriteEnable) begin
                 /*
