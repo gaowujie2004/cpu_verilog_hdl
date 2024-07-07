@@ -215,8 +215,9 @@ module id (
                                 //写控制
                                 waddr_o  <= rd;
                                 wreg_o   <= `WriteEnable;
-                                //读1、2控制
+                                //读1控制
                                 reg1_read_o <= `ReadDisable;
+                                //读2控制
                                 reg2_read_o <= `ReadDisable;
                             end
                             `FUNC_MFLO: begin       //mflo rd, R[rd] <- Lo
@@ -226,28 +227,34 @@ module id (
                                 //写控制
                                 waddr_o  <= rd;
                                 wreg_o   <= `WriteEnable;
-                                //读1、2控制
+                                //读1控制
                                 reg1_read_o <= `ReadDisable;
+                                //读2控制
                                 reg2_read_o <= `ReadDisable;
                             end
                             `FUNC_MTHI: begin       //mthi rs, Hi <- R[rs]
+                                // $display("MTHI ID.inst=%h,  ", inst_i, )
                                 instvalid <= `True_v;
-                                alusel_o  <= `ALU_RES_NOP;
+                                alusel_o  <= `ALU_RES_MOVE;
                                 aluop_o   <= `ALU_MTHI_OP;
                                 //写控制
                                 wreg_o   <= `WriteDisable;
-                                //读1、2控制
+                                //读1控制
                                 reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
                                 reg2_read_o <= `ReadDisable;
                             end
                             `FUNC_MTLO: begin       //mtlo rs, Lo <- R[rs]
                                 instvalid <= `True_v;
-                                alusel_o  <= `ALU_RES_NOP;
+                                alusel_o  <= `ALU_RES_MOVE;
                                 aluop_o   <= `ALU_MTLO_OP;
                                 //写控制
                                 wreg_o   <= `WriteDisable;
-                                //读1、2控制
+                                //读1控制
                                 reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
                                 reg2_read_o <= `ReadDisable;
                             end
 
