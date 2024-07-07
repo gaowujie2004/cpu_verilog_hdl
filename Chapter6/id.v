@@ -233,7 +233,6 @@ module id (
                                 reg2_read_o <= `ReadDisable;
                             end
                             `FUNC_MTHI: begin       //mthi rs, Hi <- R[rs]
-                                // $display("MTHI ID.inst=%h,  ", inst_i, )
                                 instvalid <= `True_v;
                                 alusel_o  <= `ALU_RES_MOVE;
                                 aluop_o   <= `ALU_MTHI_OP;
