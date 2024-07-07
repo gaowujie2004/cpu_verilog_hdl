@@ -58,9 +58,6 @@ module ex (
                 end
                 `ALU_SRA_OP: begin
                     shift_res <= $signed(reg1_data_i) >>> shift_count;
-                    // 算术右移
-                    // {`RegBus{reg1_data_i[`RegBus-1]}}
-                    $display("sra： data1: %h, data2: %h, res: %h", reg1_data_i, shift_count, $signed(reg1_data_i) >>> shift_count);
                 end
 
                 `ALU_MOVN_OP, `ALU_MOVZ_OP: begin       // movz rd, rs, rt。 R[rd] <- R[rs]
