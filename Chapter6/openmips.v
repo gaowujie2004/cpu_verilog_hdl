@@ -120,8 +120,8 @@ module openmips (
 
 
     // EX阶段
-    wire             ex_hi_i;
-    wire             ex_lo_i;
+    wire[`RegBus]    ex_hi_i;
+    wire[`RegBus]    ex_lo_i;
 
     wire             ex_hi_we_o;       //Hi寄存器写使能
     wire             ex_lo_we_o;       //Lo寄存器写使能
