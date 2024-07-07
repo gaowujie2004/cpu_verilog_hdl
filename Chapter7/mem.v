@@ -2,6 +2,8 @@
 
 module mem (
     input wire rst,
+    input wire[`InstBus]    inst_i,        //debuger
+
     input wire[`RegAddrBus] waddr_i,       //目标寄存器地址
     input wire              reg_we_i,      //目标寄存器写使能
     input wire[`RegBus]     alu_res_i,     //alu运算结果
@@ -20,7 +22,9 @@ module mem (
     output reg             hi_we_o,       
     output reg             lo_we_o,       
     output reg[`RegBus]    hi_o,          
-    output reg[`RegBus]    lo_o     
+    output reg[`RegBus]    lo_o,
+
+    output reg[`InstBus]  inst_o         //debuger
 );
 
     always @(*) begin
@@ -33,6 +37,8 @@ module mem (
             lo_we_o   <= `WriteDisable;
             hi_o      <= `ZeroWord;
             lo_o      <= `ZeroWord;
+
+            inst_o    <= `ZeroWord;
         end else begin
             waddr_o <= waddr_i;
             reg_we_o <= reg_we_i;
@@ -42,6 +48,8 @@ module mem (
             lo_we_o   <= lo_we_i;
             hi_o      <= hi_i;
             lo_o      <= lo_i;
+
+            inst_o    <= inst_i;
         end
     end
     

@@ -4,6 +4,7 @@
 module mem_wb (
     input wire rst,
     input wire clk,
+    input wire[`InstBus]    mem_inst,       //debuger
 
     input wire[`RegAddrBus] mem_waddr,
     input wire              mem_reg_we,
@@ -23,7 +24,9 @@ module mem_wb (
     output reg              wb_hi_we,       
     output reg              wb_lo_we,       
     output reg[`RegBus]     wb_hi,          
-    output reg[`RegBus]     wb_lo
+    output reg[`RegBus]     wb_lo,
+
+    output reg[`InstBus]    wb_inst        //debuger
 );
     always @(posedge clk) begin
         // 同步复位
@@ -36,6 +39,8 @@ module mem_wb (
             wb_lo_we   <= `WriteDisable;
             wb_hi      <= `ZeroWord;
             wb_lo      <= `ZeroWord;
+
+            wb_inst    <= `ZeroWord;
         end else begin
             wb_waddr  <= mem_waddr;
             wb_reg_we <= mem_reg_we;
@@ -45,6 +50,8 @@ module mem_wb (
             wb_lo_we   <= mem_lo_we;
             wb_hi      <= mem_hi;
             wb_lo      <= mem_lo;
+
+            wb_inst    <= mem_inst;
         end
     end
 endmodule

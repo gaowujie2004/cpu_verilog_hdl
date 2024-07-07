@@ -21,13 +21,16 @@ module ex (
     output reg             hi_we_o,       //Hi寄存器写使能
     output reg             lo_we_o,       //Lo寄存器写使能
     output reg[`RegBus]    hi_o,          //指令执行阶段对Hi写入的数据
-    output reg[`RegBus]    lo_o           //指令执行阶段对Lo写入的数据
+    output reg[`RegBus]    lo_o,          //指令执行阶段对Lo写入的数据
+
+    output wire[`InstBus]  inst_o         //用于调试
 );
     reg [`RegBus] logic_res;            //保存逻辑运算结果
     reg [`RegBus] shift_res;            //保存位移运算结果
     reg [`RegBus] move_res;             //移动操作运算结果
     reg [`RegBus] arithmetic_res;       //算术操作运算结果
     wire[4:0]     shift_count = reg2_data_i[4:0];
+    assign inst_o = inst_i;
 
     /* 计算：逻辑、位移、移动运算结果 */
     always @(*) begin

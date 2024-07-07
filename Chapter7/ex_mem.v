@@ -4,6 +4,7 @@
 module ex_mem (
     input wire rst,
     input wire clk,
+    input wire[`InstBus]    ex_inst,      //debuger
 
     input wire[`RegAddrBus] ex_waddr,     //目标寄存器地址
     input wire              ex_reg_we,    //目标寄存器写使能
@@ -22,7 +23,9 @@ module ex_mem (
     output reg              mem_hi_we,       
     output reg              mem_lo_we,       
     output reg[`RegBus]     mem_hi,          
-    output reg[`RegBus]     mem_lo
+    output reg[`RegBus]     mem_lo,
+
+    output reg[`InstBus]   mem_inst        //debuger
 );
 
     
@@ -36,6 +39,7 @@ module ex_mem (
             mem_lo_we   <= `WriteDisable;
             mem_hi      <= `ZeroWord;
             mem_lo      <= `ZeroWord;
+            mem_inst      <= `ZeroWord;
         end else begin 
             mem_waddr <= ex_waddr;
             mem_reg_we <= ex_reg_we;
@@ -44,6 +48,7 @@ module ex_mem (
             mem_lo_we   <= ex_lo_we;
             mem_hi      <= ex_hi;
             mem_lo      <= ex_lo;
+            mem_inst    <= ex_inst;
         end
     end
     

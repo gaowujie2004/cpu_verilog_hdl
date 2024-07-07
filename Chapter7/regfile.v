@@ -4,6 +4,7 @@
 module regfile (
     input wire rst,
     input wire clk,
+    input wire[`RegBus]     wb_inst_i,      //debuger
     // 写（写回阶段传递的）
     input wire              wb_wreg_i,      //WB阶段，写使能
     input wire[`RegAddrBus] wb_waddr_i,     //WB阶段，目的寄存器地址
@@ -28,6 +29,7 @@ module regfile (
     // Why: rdata1、rdata2 不能是wire，因为在 always 只能对reg变量赋值
 );
     reg[`RegBus] regfile[0:`RegNum-1];
+    reg[`RegBus] inst;
     
     // 写
     always @(posedge clk) begin
@@ -35,6 +37,9 @@ module regfile (
             if (wb_wreg_i==`WriteEnable && wb_waddr_i!=`NOPRegAddr) begin
                 regfile[wb_waddr_i] <= wb_wdata_i;
             end
+            
+            //debuger
+            inst <= wb_inst_i;
         end 
     end
 

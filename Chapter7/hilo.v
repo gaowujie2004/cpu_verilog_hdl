@@ -3,6 +3,7 @@
 module hilo (
     input wire rst,
     input wire clk,
+    input wire[`RegBus] wb_inst_i,      //debuger
 
     input wire          wb_hi_we_i,     //Wb阶段
     input wire          wb_lo_we_i,     //WB阶段
@@ -20,6 +21,8 @@ module hilo (
     reg[`RegBus] hi;
     reg[`RegBus] lo;
 
+    reg[`RegBus] inst;                  //debuger
+
     // 写
     always @(posedge clk) begin
         if (rst == `RstEnable) begin 
@@ -33,6 +36,8 @@ module hilo (
             if (wb_lo_we_i == `WriteEnable) begin
                 lo <= wb_lo_i;
             end
+
+            inst <= wb_inst_i;
         end
     end
 
