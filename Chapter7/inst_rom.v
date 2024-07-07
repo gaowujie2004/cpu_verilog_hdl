@@ -8,7 +8,7 @@ module inst_rom (
     // 前面是存储单元位宽，注意这个存储单元是多字节的。
     reg[`InstBus] rom[0:`InstMemNum-1];
     initial begin
-        $readmemh("C:/Users/Administrator/Desktop/verilog_hdl/Chapter6/rom.data", rom);
+        $readmemh("C:/Users/Administrator/Desktop/verilog_hdl/Chapter7/rom.data", rom);
     end
 
     always @(*) begin
