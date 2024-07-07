@@ -60,7 +60,7 @@ module regfile (
             end else if (wb_wreg_i == `WriteEnable && wb_waddr_i==raddr1) begin   //WB阶段的信息
                 //数据转发：译码读、写回阶段写，，写入的是WB阶段的信息
                 //此时读与写端口一致，且都使能，那么就直接将写入信息返回给读，当上升沿一到再写。
-                rdata1 <= wdata;
+                rdata1 <= wb_wdata_i;
             end else begin
                 // 不存在数据相关，从regfile读
                 rdata1 <= regfile[raddr1];
@@ -91,7 +91,7 @@ module regfile (
                 rdata2 <= mem_wdata_i;
             end else if (wb_wreg_i == `WriteEnable && wb_waddr_i==raddr2 )begin
                 //数据转发：译码读、写回阶段写，此时读与写端口一致，且都使能，那么就直接将写入信息返回给读，当上升沿一到再写。
-                rdata2 <= wdata;
+                rdata2 <= wb_wdata_i;
             end begin
                 // 不存在数据相关，从regfile读
                 rdata2 <= regfile[raddr2];

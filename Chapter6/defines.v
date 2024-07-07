@@ -40,6 +40,13 @@
 `define FUNC_NOP   6'b000000
 `define FUNC_SSNOP 6'b000000
 
+`define FUNC_MOVZ  6'b001010
+`define FUNC_MOVN  6'b001011
+`define FUNC_MFHI  6'b010000
+`define FUNC_MTHI  6'b010001
+`define FUNC_MFLO  6'b010010
+`define FUNC_MTLO  6'b010011
+
 `define OP_SPECIAL_INST  6'b000000
 `define OP_REGIMM_INST   6'b000001
 `define OP_SPECIAL2_INST 6'b011100
@@ -55,10 +62,18 @@
 `define ALU_SRL_OP   8'b00000010
 `define ALU_SRA_OP   8'b00000011
 
+`define ALU_MOVZ_OP  8'b00001010
+`define ALU_MOVN_OP  8'b00001011
+`define ALU_MFHI_OP  8'b00010000
+`define ALU_MTHI_OP  8'b00010001
+`define ALU_MFLO_OP  8'b00010010
+`define ALU_MTLO_OP  8'b00010011
+
 `define ALU_NOP_OP   8'b00000000
 // AluSel
 `define ALU_RES_LOGIC 3'b001         //逻辑运算
 `define ALU_RES_SHIFT 3'b010         //位移运算
+`define ALU_RES_MOVE  3'b011	     //移动运算
 
 `define ALU_RES_NOP   3'b000         
 

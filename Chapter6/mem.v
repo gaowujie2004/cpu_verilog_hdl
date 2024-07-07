@@ -17,10 +17,10 @@ module mem (
     output reg              reg_we_o,      
     output reg[`RegBus]     mem_data_o,
 
-    output wire             hi_we_o,       
-    output wire             lo_we_o,       
-    output wire[`RegBus]    hi_o,          
-    output wire[`RegBus]    lo_o,          
+    output reg             hi_we_o,       
+    output reg             lo_we_o,       
+    output reg[`RegBus]    hi_o,          
+    output reg[`RegBus]    lo_o     
 );
 
     always @(*) begin
@@ -29,17 +29,17 @@ module mem (
             reg_we_o <= `WriteDisable;
             mem_data_o <= `ZeroWord;
 
-            hi_we_i   <= `WriteDisable;
-            lo_we_i   <= `WriteDisable;
-            hi_i      <= `ZeroWord;
-            lo_i      <= `ZeroWord;
+            hi_we_o   <= `WriteDisable;
+            lo_we_o   <= `WriteDisable;
+            hi_o      <= `ZeroWord;
+            lo_o      <= `ZeroWord;
         end else begin
             waddr_o <= waddr_i;
             reg_we_o <= reg_we_i;
             mem_data_o <= alu_res_i;
 
             hi_we_o   <= hi_we_i;
-            lo_we_o   <= lo_ew_i;
+            lo_we_o   <= lo_we_i;
             hi_o      <= hi_i;
             lo_o      <= lo_i;
         end

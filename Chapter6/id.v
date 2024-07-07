@@ -179,7 +179,7 @@ module id (
 
                             `FUNC_MOVN: begin
                                 instvalid <= `True_v;
-                                alusel_o <= `ALU_RES_MOV;
+                                alusel_o <= `ALU_RES_MOVE;
                                 aluop_o  <= `ALU_MOVN_OP;
                                 //写控制
                                 waddr_o  <= rd;
@@ -194,7 +194,7 @@ module id (
                             end
                             `FUNC_MOVZ: begin
                                 instvalid <= `True_v;
-                                alusel_o <= `ALU_RES_MOV;
+                                alusel_o <= `ALU_RES_MOVE;
                                 aluop_o  <= `ALU_MOVZ_OP;
                                 //写控制
                                 waddr_o  <= rd;
@@ -210,7 +210,7 @@ module id (
 
                             `FUNC_MFHI: begin       //mfhi rd, R[rd] <- Hi
                                 instvalid <= `True_v;
-                                alusel_o  <= `ALU_RES_MOV;
+                                alusel_o  <= `ALU_RES_MOVE;
                                 aluop_o   <= `ALU_MFHI_OP;
                                 //写控制
                                 waddr_o  <= rd;
@@ -221,7 +221,7 @@ module id (
                             end
                             `FUNC_MFLO: begin       //mflo rd, R[rd] <- Lo
                                 instvalid <= `True_v;
-                                alusel_o  <= `ALU_RES_MOV;
+                                alusel_o  <= `ALU_RES_MOVE;
                                 aluop_o   <= `ALU_MFLO_OP;
                                 //写控制
                                 waddr_o  <= rd;

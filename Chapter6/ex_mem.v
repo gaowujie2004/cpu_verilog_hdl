@@ -19,10 +19,10 @@ module ex_mem (
     output reg              mem_reg_we,      
     output reg[`RegBus]     mem_alu_res,
 
-    output wire             mem_hi_we,       
-    output wire             mem_lo_we,       
-    output wire[`RegBus]    mem_hi,          
-    output wire[`RegBus]    mem_lo
+    output reg              mem_hi_we,       
+    output reg              mem_lo_we,       
+    output reg[`RegBus]     mem_hi,          
+    output reg[`RegBus]     mem_lo
 );
 
     

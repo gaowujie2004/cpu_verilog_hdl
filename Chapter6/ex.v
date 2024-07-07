@@ -16,13 +16,12 @@ module ex (
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能
-    output reg[`RegBus]     alu_res_o      //运算结果
+    output reg[`RegBus]     alu_res_o,     //运算结果
 
-    output wire             hi_we_o,       //Hi寄存器写使能
-    output wire             lo_we_o,       //Lo寄存器写使能
-    output wire[`RegBus]    hi_o,          //指令执行阶段对Hi写入的数据
-    output wire[`RegBus]    lo_o,          //指令执行阶段对Lo写入的数据
-
+    output reg             hi_we_o,       //Hi寄存器写使能
+    output reg             lo_we_o,       //Lo寄存器写使能
+    output reg[`RegBus]    hi_o,          //指令执行阶段对Hi写入的数据
+    output reg[`RegBus]    lo_o           //指令执行阶段对Lo写入的数据
 );
     reg [`RegBus] logic_res;            //保存逻辑运算结果
     reg [`RegBus] shift_res;            //保存位移运算结果
@@ -73,7 +72,13 @@ module ex (
                     move_res <= lo_i;
                 end
 
-                default, `ALU_NOP_OP: begin
+                `ALU_NOP_OP: begin
+                    logic_res <= `ZeroWord;
+                    shift_res <= `ZeroWord;
+                    move_res  <= `ZeroWord;
+                end
+
+                default: begin
                     logic_res <= `ZeroWord;
                     shift_res <= `ZeroWord;
                     move_res  <= `ZeroWord;
@@ -94,8 +99,8 @@ module ex (
             `ALU_RES_SHIFT: begin
                 alu_res_o <= shift_res;
             end
-            `ALU_RES_MOV: begin
-                alu_res_i <= move_res;
+            `ALU_RES_MOVE: begin
+                alu_res_o <= move_res;
             end
             `ALU_RES_NOP: begin
                 alu_res_o <= `ZeroWord;

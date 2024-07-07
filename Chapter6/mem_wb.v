@@ -20,10 +20,10 @@ module mem_wb (
     output reg              wb_reg_we,
     output reg[`RegBus]     wb_data,        //写回阶段的指令要写入目的寄存器的值
 
-    output wire             wb_hi_we,       
-    output wire             wb_lo_we,       
-    output wire[`RegBus]    wb_hi,          
-    output wire[`RegBus]    wb_lo
+    output reg              wb_hi_we,       
+    output reg              wb_lo_we,       
+    output reg[`RegBus]     wb_hi,          
+    output reg[`RegBus]     wb_lo
 );
     always @(posedge clk) begin
         // 同步复位
