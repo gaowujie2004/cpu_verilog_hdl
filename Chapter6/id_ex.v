@@ -10,7 +10,7 @@ module id_ex (
     input wire[`RegBus]     id_reg1_data,   //源操作数1
     input wire[`RegBus]     id_reg2_data,   //源操作数2
     input wire[`RegAddrBus] id_waddr,       //目标寄存器地址
-    input reg               id_reg_we,       //目标寄存器写使能
+    input wire              id_reg_we,      //目标寄存器写使能
 
     output reg[`AluSelBus]  ex_alusel,
     output reg[`AluOpBus]   ex_aluop,
