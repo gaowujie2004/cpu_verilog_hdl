@@ -117,9 +117,8 @@ module ex (
             lo_we_o <= `WriteDisable;
             lo_o    <= `ZeroWord;
         end else begin
-            
             case (aluop_i)
-                `ALU_MTHI_OP: begin
+                `ALU_MTHI_OP: begin             //mthi rs。hi <- R[rs]
                     hi_we_o <= `WriteEnable;
                     hi_o    <= reg1_data_i;
 
@@ -128,7 +127,7 @@ module ex (
                 end
 
                 `ALU_MTLO_OP: begin
-                    lo_we_o <= `WriteEnable;
+                    lo_we_o <= `WriteEnable;    //mtlo rs。lo <- R[rs]
                     lo_o    <= reg1_data_i;
 
                     hi_we_o <= `WriteDisable;

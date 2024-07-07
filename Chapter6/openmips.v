@@ -185,8 +185,8 @@ module openmips (
         .mem_waddr(mem_waddr_o), .mem_reg_we(mem_reg_we_o), .mem_data(mem_alu_res_o),
         .mem_hi_we(mem_hi_we_o), .mem_lo_we(mem_lo_we_o), .mem_hi(mem_hi_o), .mem_lo(mem_lo_o),
         //输出
-        .wb_waddr(wb_waddr_o), .wb_reg_we(wb_we_o), .wb_data(wb_wdata_o),
-        .wb_hi_we(wb_hi_we_i), .wb_lo_we(wb_lo_we_i), .wb_hi(wb_hi_i), .wb_lo(wb_lo_i)
+        .wb_waddr(wb_waddr_o), .wb_reg_we(wb_we_o), .wb_data(wb_wdata_o),   //送入regfile
+        .wb_hi_we(wb_hi_we_i), .wb_lo_we(wb_lo_we_i), .wb_hi(wb_hi_i), .wb_lo(wb_lo_i) //送入hilo
     );
 
     hilo hilo_0(
