@@ -69,11 +69,24 @@ module regfile (
                 */
                 rdata1 <= mem_wdata_i;
             end else if (wb_wreg_i == `WriteEnable && wb_waddr_i==raddr1) begin   //WB阶段的信息
-                //数据转发：译码读、写回阶段写，，写入的是WB阶段的信息
-                //此时读与写端口一致，且都使能，那么就直接将写入信息返回给读，当上升沿一到再写。
+                 /*
+                    ori $1, $0, 11    写$1
+                    nop
+                    nop
+                    ori $1, $0, 22    读$1
+                    问题：当第4条指令在ID阶段时，第1条指令在WB阶段，但是WB结束的下一个时钟上升沿才写入Regfile
+                    解决（数据转发）：将第1条指令的写入$1的数据，作为输出
+                */
                 rdata1 <= wb_wdata_i;
             end else begin
-                // 不存在数据相关，从regfile读
+                /*
+                    ori $1, $0, 11    写$1
+                    nop
+                    nop
+                    nop
+                    ori $1, $0, 22    读$1
+                    不存在数据相关，regfile已更新，从regfile读
+                */
                 rdata1 <= regfile[raddr1];
             end
         end else begin
