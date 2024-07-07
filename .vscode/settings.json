@@ -26,5 +26,7 @@
         "[x]",
         "Why",
         "Think"
-    ]
+    ],
+    "verilog.linting.linter": "xvlog",
+    "verilog.linting.path": "D:\\xilinx\\Vivado\\2024.1\\bin"
 }
