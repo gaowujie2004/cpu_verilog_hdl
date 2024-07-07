@@ -27,8 +27,6 @@ module regfile (
     output reg[`RegBus]     rdata2
     // Why: rdata1、rdata2 不能是wire，因为在 always 只能对reg变量赋值
 );
-
-    // Why: 注意，这里0:RegNum-1，这是声明个数，这样写也是可以的
     reg[`RegBus] regfile[0:`RegNum-1];
     
     // 写
@@ -46,16 +44,29 @@ module regfile (
             rdata1 <= `ZeroWord;
         end else if (re1 == `ReadEnable) begin
             /*
-                数据转发。
-                Think：优先级
+                Think：数据转发优先级
                 ori $1, $0, 11
                 ori $1, $0, 22
                 ori $1, $0, 33
-                ori $3, $1, 44  //$1，应该是第三条指令的目标寄存器结果，故应该选择最近的数据转发
+                ori $3, $1, 44  
+                第4条指令读$1，应该是第3条指令的目标寄存器结果，故应该选择最近的数据转发，即选择第3条指令的写数据
             */
             if (ex_wreg_i==`WriteEnable && ex_waddr_i==raddr1) begin
+                /*
+                    ori $1, $0, 11    写$1
+                    ori $1, $0, 22    读$1
+                    问题：当第2条指令在ID阶段时，第1条指令在EX阶段
+                    解决（数据转发）：将第1条指令的写入$1的数据，作为输出
+                */
                 rdata1 <= ex_wdata_i;
             end else if (mem_wreg_i==`WriteEnable && mem_waddr_i==raddr1) begin
+                /*
+                    ori $1, $0, 11    写$1
+                    nop
+                    ori $1, $0, 22    读$1
+                    问题：当第2条指令在ID阶段时，第1条指令在EX阶段
+                    解决（数据转发）：将第1条指令的写入$1的数据，作为输出
+                */
                 rdata1 <= mem_wdata_i;
             end else if (wb_wreg_i == `WriteEnable && wb_waddr_i==raddr1) begin   //WB阶段的信息
                 //数据转发：译码读、写回阶段写，，写入的是WB阶段的信息
@@ -75,25 +86,13 @@ module regfile (
         if (rst == `RstEnable || raddr2 == `NOPRegAddr) begin
             rdata2 <= `ZeroWord;
         end else if (re2 == `ReadEnable) begin
-            /*
-                数据转发。
-                Think：优先级
-                ori $1, $0, 11
-                ori $1, $0, 22
-                ori $1, $0, 33
-                ori $3, $1, 44  //$1，应该是第三条指令的目标寄存器结果，故应该选择最近的数据转发
-            */
             if (ex_wreg_i==`WriteEnable && ex_waddr_i==raddr2) begin
-                // 数据转发：如果Regfile模块读端⼝1要读取的寄存器就是执⾏阶段要写的⽬的寄存器，那么直接把执⾏阶段的结果ex_wdata_i作为reg1_o的值;
                 rdata2 <= ex_wdata_i;
             end else if (mem_wreg_i==`WriteEnable && mem_waddr_i==raddr2) begin
-                // 数据转发：访存阶段
                 rdata2 <= mem_wdata_i;
             end else if (wb_wreg_i == `WriteEnable && wb_waddr_i==raddr2 )begin
-                //数据转发：译码读、写回阶段写，此时读与写端口一致，且都使能，那么就直接将写入信息返回给读，当上升沿一到再写。
                 rdata2 <= wb_wdata_i;
             end begin
-                // 不存在数据相关，从regfile读
                 rdata2 <= regfile[raddr2];
             end
         end else begin
