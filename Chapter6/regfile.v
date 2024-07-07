@@ -92,7 +92,7 @@ module regfile (
                 rdata2 <= mem_wdata_i;
             end else if (wb_wreg_i == `WriteEnable && wb_waddr_i==raddr2 )begin
                 rdata2 <= wb_wdata_i;
-            end begin
+            end else begin
                 rdata2 <= regfile[raddr2];
             end
         end else begin
