@@ -11,7 +11,7 @@ module id (
     
     // 流水寄存器保存
     output reg[`AluSelBus] alusel_o,        // 运算类型？            
-    output reg[`AluOpBus]  aluop_o,         // TODO 不太理解运算子类型
+    output reg[`AluOpBus]  aluop_o,         // 运算子类型
     output reg[`RegBus]    reg1_data_o,     // 源操作数1(从regfile模块读取)
     output reg[`RegBus]    reg2_data_o,     // 源操作数2(从regfile模块读取)
     output reg[`RegAddrBus]    waddr_o,     // 目标寄存器地址
@@ -257,6 +257,119 @@ module id (
                                 reg2_read_o <= `ReadDisable;
                             end
 
+                            /* R[rd] <- R[rs] OP R[rt] */
+                            `FUNC_ADD: begin    
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_ADD_OP;
+                                //写控制
+                                wreg_o    <= `WriteEnable;
+                                waddr_o   <= rd;
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;
+                            end
+                            `FUNC_ADDU: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_ADDU_OP;
+                                //写控制
+                                wreg_o    <= `WriteEnable;
+                                waddr_o   <= rd;
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;
+                            end
+                            `FUNC_SUB: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_SUB_OP;
+                                //写控制
+                                wreg_o    <= `WriteEnable;
+                                waddr_o   <= rd;
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;                               
+                            end
+                            `FUNC_SUBU: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_SUBU_OP;
+                                //写控制
+                                wreg_o    <= `WriteEnable;
+                                waddr_o   <= rd;
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;                               
+                            end
+                            `FUNC_SLT: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_SLT_OP;
+                                //写控制
+                                wreg_o    <= `WriteEnable;
+                                waddr_o   <= rd;
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;                               
+                            end
+                            `FUNC_SLTU: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_SLTU_OP;
+                                //写控制
+                                wreg_o    <= `WriteEnable;
+                                waddr_o   <= rd;
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;                               
+                            end
+
+                            `FUNC_MULT: begin           //{hi, lo} <- R[rs] * R[rt]，有符号
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_MULT_OP;
+                                //写控制
+                                wreg_o    <= `WriteDisable; //写Hi、Lo
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;                                   
+                            end
+                            `FUNC_MULTU: begin           //{hi, lo} <- R[rs] * R[rt]，无符号
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_MULTU_OP;
+                                //写控制
+                                wreg_o    <= `WriteDisable; //写Hi、Lo
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;                                   
+                            end                         
+
                             default: begin
                                 instvalid <= `False_v;
                             end
@@ -310,6 +423,53 @@ module id (
                             default:  begin
                                 instvalid <= `False_v;
                             end
+                        endcase
+                    end
+                end
+                `OP_SPECIAL2_INST: begin
+                    if (shamt == 5'b0) begin
+                        case (func)
+                            `FUNC_MUL: begin    // R[rd] <- R[rs] ×  R[rt]，低32位写入R[rd]
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_MUL_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                // 源操作数1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 源操作数2控制
+                                reg2_read_o <= `ReadEnable;    //不读，来源于立即数
+                                reg2_addr_o <= rt;                              
+                            end
+
+                            `FUNC_CLO: begin    // R[rd] <- coun_leading_zeros R[rs]
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_CLO_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                // 源操作数1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 源操作数2控制
+                                reg2_read_o <= `ReadDisable;        
+                            end
+                            `FUNC_CLZ: begin    // R[rd] <- coun_leading_ones R[rs]
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_CLZ_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                waddr_o   <= rd;
+                                wreg_o    <= `WriteEnable;
+                                // 源操作数1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 源操作数2控制
+                                reg2_read_o <= `ReadDisable;    
+                            end                            
                         endcase
                     end
                 end
@@ -374,6 +534,64 @@ module id (
                     reg2_read_o <= `ReadDisable;    //不读，来源于立即数
                     imm32 = {imm16, 16'b0};
                 end
+
+                /* R[rt]  <-  R[rs] OP SignExt(imm16) */
+                `OP_ADDI: begin
+                    alusel_o  <= `ALU_RES_ARITHMETIC;
+                    aluop_o   <= `ALU_ADD_OP;
+                    instvalid <= `True_v;
+                    //写控制
+                    waddr_o   <= rt;
+                    wreg_o    <= `WriteEnable;
+                    // 源操作数1控制
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    // 源操作数2控制
+                    reg2_read_o <= `ReadDisable;    //不读，来源于立即数
+                    imm32 <= { {16{imm16[15]}}, imm16 }; //符号扩展
+                end
+                `OP_ADDIU: begin
+                    alusel_o  <= `ALU_RES_ARITHMETIC;
+                    aluop_o   <= `ALU_ADDU_OP;
+                    instvalid <= `True_v;
+                    //写控制
+                    waddr_o   <= rt;
+                    wreg_o    <= `WriteEnable;
+                    // 源操作数1控制
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    // 源操作数2控制
+                    reg2_read_o <= `ReadDisable;    //不读，来源于立即数
+                    imm32 <= { {16{imm16[15]}}, imm16 }; //符号扩展
+                end
+                `OP_SLTI: begin
+                    alusel_o  <= `ALU_RES_ARITHMETIC;
+                    aluop_o   <= `ALU_SLT_OP;
+                    instvalid <= `True_v;
+                    //写控制
+                    waddr_o   <= rt;
+                    wreg_o    <= `WriteEnable;
+                    // 源操作数1控制
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    // 源操作数2控制
+                    reg2_read_o <= `ReadDisable;    //不读，来源于立即数
+                    imm32 <= { {16{imm16[15]}}, imm16 }; //符号扩展
+                end                
+                `OP_SLTIU: begin
+                    alusel_o  <= `ALU_RES_ARITHMETIC;
+                    aluop_o   <= `ALU_SLTU_OP;
+                    instvalid <= `True_v;
+                    //写控制
+                    waddr_o   <= rt;
+                    wreg_o    <= `WriteEnable;
+                    // 源操作数1控制
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    // 源操作数2控制
+                    reg2_read_o <= `ReadDisable;    //不读，来源于立即数
+                    imm32 <= { {16{imm16[15]}}, imm16 }; //符号扩展
+                end      
 
                 `OP_PREF: begin
                     alusel_o  <= `ALU_NOP_OP;

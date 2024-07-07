@@ -26,9 +26,10 @@ module ex (
     reg [`RegBus] logic_res;            //保存逻辑运算结果
     reg [`RegBus] shift_res;            //保存位移运算结果
     reg [`RegBus] move_res;             //移动操作运算结果
+    reg [`RegBus] arithmetic_res;       //算术操作运算结果
     wire[4:0]     shift_count = reg2_data_i[4:0];
 
-    // 第一步：根据 aluop_i 运算类型，计算结果
+    /* 根据 aluop_i 运算类型，计算结果 */
     always @(*) begin
         if (rst == `RstEnable) begin 
             logic_res <= `ZeroWord;
@@ -87,21 +88,101 @@ module ex (
         end
     end
 
-    // 第二步： alusel_i 选择是算术运算还是逻辑运算，选择一个输出
+    wire xF=reg1_data_i[`RegWidth-1];
+    wire yF=reg2_data_i[`RegWidth-1];
+    reg  sumF;
+    reg  of = `False_v;                  //溢出判断
+    reg signed[6:0] i;                   //0~31是正数
+    /* 简单算术运算结果 */
+    always @(*) begin
+        if (rst ==`RstEnable) begin
+            arithmetic_res = `ZeroWord;
+        end else begin
+            case (aluop_i)
+                `ALU_ADD_OP: begin
+                    arithmetic_res = reg1_data_i + reg2_data_i;
+                    // TODO:溢出则不赋值，且产生中断
+                    // +、+、-，溢出，0、0、1
+                    // -、-、+，溢出，1、1、0
+                    sumF = arithmetic_res[`RegWidth-1];
+                    of = (~xF & ~yF & sumF) | (xF & yF & ~sumF);
+                end
+
+                `ALU_ADDU_OP: begin
+                    arithmetic_res  <= reg1_data_i + reg2_data_i;
+                end
+
+                `ALU_SUB_OP: begin
+                    arithmetic_res = reg1_data_i - reg2_data_i;
+                    // TODO: 溢出则不赋值，且产生中断
+                    // +、-，转为加，+ +，可能溢出。   +、-， - ，溢出。  0、1、1  ~xf & yf & sf
+                    // -、+，转为加，- -， 可能溢出。  -、+、+，  溢出。  1  0 0  xf & ~yf & ~sf
+                    // -、-，转为加，- +，不可能溢出
+                    // +、+，转为加，+ -，不可能溢出
+                    sumF = arithmetic_res[`RegWidth-1];
+                    of = (~xF & yF & sumF) | (xF & ~yF & ~sumF);
+                end
+
+                `ALU_SUBU_OP: begin
+                    arithmetic_res <= reg1_data_i - reg2_data_i;
+                end
+
+                `ALU_MUL_OP: begin          //R[rd] <- R[rs] ×  R[rt]，有符号相乘低32位放入R[rd]
+                    arithmetic_res <= $signed(reg1_data_i) * $signed(reg2_data_i);
+                end
+
+                `ALU_SLT_OP: begin          //R[rt] <-  reg1<reg2 ? 1 : 0，有符号比较
+                    arithmetic_res <= $signed(reg1_data_i) < $signed(reg2_data_i);
+                end
+
+                `ALU_SLTU_OP: begin         //R[rt] <-  rs<SignExt(imm16) ? 1 : 0，无符号比较
+                    arithmetic_res <= reg1_data_i < reg2_data_i;
+                end
+
+                `ALU_CLZ_OP: begin          //R[rd] <- coun_leading_zeros R[rs]，从高位到低位有多少个连续的0
+                    arithmetic_res=0;
+                    for(i=6'd31; i>=0 && !reg1_data_i[i]; i=i-1) begin
+                        arithmetic_res = arithmetic_res + 1;
+                    end
+                end
+
+                `ALU_CLO_OP: begin          //R[rd] <- coun_leading_ones R[rs]，从高位到低位有多少个连续的1
+                    arithmetic_res=0;
+                    for(i=6'd31; i>=0 && reg1_data_i[i]; i=i-1) begin
+                        arithmetic_res = arithmetic_res + 1;
+                    end
+                end 
+            endcase
+        end
+    end
+
+    /* alusel_i 选择是算术运算还是逻辑运算，选择一个输出 */
     always @(*) begin
         waddr_o <= waddr_i;
-        reg_we_o <= reg_we_i;
+        if ((aluop_i == `ALU_ADD_OP || aluop_i == `ALU_SUB_OP ) && of) begin
+            reg_we_o <= `WriteDisable;
+            // TODO: 遗留项，后续还会触发中断
+        end else begin
+            reg_we_o <= reg_we_i;
+        end
 
         case (alusel_i)
             `ALU_RES_LOGIC: begin
                 alu_res_o <= logic_res;
             end
+
             `ALU_RES_SHIFT: begin
                 alu_res_o <= shift_res;
             end
+
             `ALU_RES_MOVE: begin
                 alu_res_o <= move_res;
             end
+
+            `ALU_RES_ARITHMETIC: begin
+                alu_res_o <= arithmetic_res;
+            end
+
             `ALU_RES_NOP: begin
                 alu_res_o <= `ZeroWord;
             end
@@ -132,6 +213,18 @@ module ex (
 
                     hi_we_o <= `WriteDisable;
                     hi_o    <= `ZeroWord;
+                end
+
+                `ALU_MULT_OP: begin         //{hi, lo} <- rs × rt，有符号
+                    {hi_o, lo_o} <= $signed(reg1_data_i)  * $signed(reg2_data_i);
+                    hi_we_o <= `WriteEnable;
+                    lo_we_o <= `WriteEnable;
+                end
+
+                `ALU_MULTU_OP: begin        //{hi, lo} <- rs × rt，无符号
+                    {hi_o, lo_o} <= (reg1_data_i)  * (reg2_data_i);
+                    hi_we_o <= `WriteEnable;
+                    lo_we_o <= `WriteEnable;
                 end
 
                 default: begin
