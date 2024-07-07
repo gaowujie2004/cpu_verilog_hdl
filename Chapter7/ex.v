@@ -88,12 +88,14 @@ module ex (
         end
     end
 
+    /*
+     * 计算：简单算术运算结果
+    */
     wire xF=reg1_data_i[`RegWidth-1];
     wire yF=reg2_data_i[`RegWidth-1];
     reg  sumF;
     reg  of = `False_v;                  //溢出判断
     reg signed[6:0] i;                   //0~31是正数
-    /* 简单算术运算结果 */
     always @(*) begin
         if (rst ==`RstEnable) begin
             arithmetic_res = `ZeroWord;
@@ -156,7 +158,9 @@ module ex (
         end
     end
 
-    /* alusel_i 选择是算术运算还是逻辑运算，选择一个输出 */
+    /*
+     * 选择结果：根据alusel_i选择运算结果输出
+    */
     always @(*) begin
         waddr_o <= waddr_i;
         if ((aluop_i == `ALU_ADD_OP || aluop_i == `ALU_SUB_OP ) && of) begin
@@ -189,8 +193,10 @@ module ex (
         endcase
     end
 
-    // 第三步：MTLO、MTHI，需要给出 hi、lo写使能以及写入数据
-    // 此信号非传递信号，而是在该阶段产生的
+    /*
+     * mtlo、mthi、mult、multu需要给出，hi、lo写使能以及写入数据
+     * 此信号非传递信号，而是在该阶段产生的
+    */
     always @(*) begin
         if (rst == `RstEnable) begin
             hi_we_o <= `WriteDisable;
@@ -220,7 +226,6 @@ module ex (
                     hi_we_o <= `WriteEnable;
                     lo_we_o <= `WriteEnable;
                 end
-
                 `ALU_MULTU_OP: begin        //{hi, lo} <- rs × rt，无符号
                     {hi_o, lo_o} <= (reg1_data_i)  * (reg2_data_i);
                     hi_we_o <= `WriteEnable;
