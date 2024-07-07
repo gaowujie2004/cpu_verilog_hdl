@@ -1,5 +1,5 @@
 module hilo (
-    wire rst,
+    input wire rst,
     input wire clk,
 
     input wire          wb_hi_we_i,     //Wb阶段
