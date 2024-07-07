@@ -29,7 +29,7 @@ module ex (
     reg [`RegBus] arithmetic_res;       //算术操作运算结果
     wire[4:0]     shift_count = reg2_data_i[4:0];
 
-    /* 根据 aluop_i 运算类型，计算结果 */
+    /* 计算：逻辑、位移、移动运算结果 */
     always @(*) begin
         if (rst == `RstEnable) begin 
             logic_res <= `ZeroWord;
@@ -191,7 +191,7 @@ module ex (
     end
 
     /*
-     * mtlo、mthi、mult、multu需要给出，hi、lo写使能以及写入数据
+     * Hi、Lo写入：mtlo、mthi、mult、multu需要给出，hi、lo写使能以及写入数据
      * 此信号非传递信号，而是在该阶段产生的
     */
     always @(*) begin
