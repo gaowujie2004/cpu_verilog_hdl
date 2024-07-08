@@ -24,7 +24,7 @@ module id (
     output reg[`RegAddrBus]  reg2_addr_o,   // 读reg2寄存器地址
     // Why: 为什么是reg类型？因为在 always 中赋值，就必须是reg类型，当然综合后可能是连线或寄存器。
 
-    output reg[`StallBus]    stallreq_from_id, 
+    output    stallreq, 
     
     //调试目的
     output wire[`InstBus] inst_o
@@ -471,7 +471,60 @@ module id (
                                 reg1_addr_o <= rs;
                                 // 源操作数2控制
                                 reg2_read_o <= `ReadDisable;    
-                            end                            
+                            end      
+
+                            `FUNC_MADD: begin   //{HI, LO} <- {HI, LO} + rs × rt
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_MADD_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                // 源操作数1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 源操作数2控制
+                                reg2_read_o <= `ReadEnable;     
+                                reg2_addr_o <= rt;                          
+                            end
+                            `FUNC_MADDU: begin   //{HI, LO} <- {HI, LO} + r s× rt
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_MADDU_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                // 源操作数1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 源操作数2控制
+                                reg2_read_o <= `ReadEnable;     
+                                reg2_addr_o <= rt;                               
+                            end
+                            `FUNC_MSUB: begin   //{HI, LO} <- {HI, LO} - r s× rt
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_MSUB_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                // 源操作数1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 源操作数2控制
+                                reg2_read_o <= `ReadEnable;     
+                                reg2_addr_o <= rt;                               
+                            end 
+                            `FUNC_MSUBU: begin   //{HI, LO} <- {HI, LO} + r s× rt
+                                alusel_o  <= `ALU_RES_ARITHMETIC;
+                                aluop_o   <= `ALU_MSUBU_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                // 源操作数1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                // 源操作数2控制
+                                reg2_read_o <= `ReadEnable;     
+                                reg2_addr_o <= rt;                               
+                            end            
                         endcase
                     end
                 end

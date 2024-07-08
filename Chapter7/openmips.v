@@ -10,12 +10,18 @@ module openmips (
     output wire[`InstAddrBus] rom_addr_o  //输出到ROM的地址
 );
     // 第一部分：连接各个模块的传送线缆
+    // stall_ctrl部件
+    wire stallreq_from_id;
+    wire stallreq_from_ex;
+    wire[`StallBus] stall;
 
     // IF阶段
     wire[`InstAddrBus] if_pc;
     pc_reg pc_reg_0(
         .rst(rst),
         .clk(clk),
+        .stall(stall),
+
         .pc(if_pc),
         .ce(rom_ce_o)
     );
@@ -30,6 +36,8 @@ module openmips (
         .rst(rst), .clk(clk), 
         .if_pc(if_pc),
         .if_inst(rom_data_i), 
+        .stall(stall),
+
         //输出
         .id_pc(id_pc_i), 
         .id_inst(id_inst_i)
@@ -46,13 +54,11 @@ module openmips (
     wire              id_wreg_o;
 
 
-    // stall_ctrl部件
-    wire stallreq_from_id;
-    wire stallreq_from_ex;
-    wire[`StallBus] stall;
     stall_ctrl stall_ctrl_0(
+        .rst(rst),
         .stallreq_from_id(stallreq_from_id),
         .stallreq_from_ex(stallreq_from_ex),
+
         .stall(stall)
     );
 
@@ -89,7 +95,7 @@ module openmips (
         .reg2_read_o(id_reg2_read_o),
         .reg2_addr_o(id_reg2_addr_o),
         //送入stall_ctrl模块
-        .stallreq_from_id(stallreq_from_id),
+        .stallreq(stallreq_from_id),
         //调试目的
         .inst_o(id_inst_o)
     );
@@ -123,6 +129,7 @@ module openmips (
     wire[`InstBus]    ex_inst_i;
     id_ex id_ex_0(
         .rst(rst), .clk(clk), .id_inst(id_inst_o),
+        .stall(stall),
         .id_alusel(id_alusel_o), .id_aluop(id_aluop_o), 
         .id_reg1_data(id_reg1_data_o), .id_reg2_data(id_reg2_data_o),
         .id_waddr(id_waddr_o), .id_reg_we(id_wreg_o),
@@ -143,6 +150,11 @@ module openmips (
     wire[`RegBus]    ex_hi_o;          //指令执行阶段对Hi写入的数据
     wire[`RegBus]    ex_lo_o;          //指令执行阶段对Lo写入的数据
     wire[`RegBus]    ex_inst_o;        //debuger
+    wire[1:0]        ex_cnt_o;         //madd(u) msub(u)
+    wire[`DoubleRegBus] ex_hilo_temp_o;//madd(u) msub(u)
+
+    wire[1:0]        ex_cnt_i;         //madd(u) msub(u)
+    wire[`DoubleRegBus] ex_hilo_temp_i;//madd(u) msub(u)
 
     ex ex_0(
         .rst(rst), .inst_i(ex_inst_i),
@@ -150,15 +162,18 @@ module openmips (
         .reg1_data_i(ex_reg1_data_i), .reg2_data_i(ex_reg2_data_i),
         .waddr_i(ex_waddr_i), .reg_we_i(ex_wreg_i),
         .hi_i(ex_hi_i), .lo_i(ex_lo_i),
-        //输出
+        .cnt_i(ex_cnt_i), .hilo_temp_i(ex_hilo_temp_i),
+
         /*写regfile相关信号*/
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o),
         /*写hilo相关信号*/
         .hi_we_o(ex_hi_we_o), .lo_we_o(ex_lo_we_o), .hi_o(ex_hi_o), .lo_o(ex_lo_o),
         /*送入stall_ctrl模块*/
-        .stallreq_from_ex(stallreq_from_id),
-            //debuger
-        .inst_o(ex_inst_o)
+        .stallreq(stallreq_from_ex),
+        /*debuger*/
+        .inst_o(ex_inst_o),
+        /*madd(u) msub(u)*/
+        .cnt_o(ex_cnt_o), .hilo_temp_o(ex_hilo_temp_o)
     );
 
 
@@ -173,13 +188,17 @@ module openmips (
     wire[`RegBus]      mem_inst_i;    
     ex_mem ex_mem_0(
         .rst(rst), .clk(clk), 
+        .stall(stall),
+        .ex_cnt(ex_cnt_o), .ex_hilo_temp(ex_hilo_temp_o),
         .ex_inst(ex_inst_o),
         .ex_waddr(ex_waddr_o), .ex_reg_we(ex_reg_we_o), .ex_alu_res(ex_alu_res_o),
         .ex_hi_we(ex_hi_we_o), .ex_lo_we(ex_lo_we_o), .ex_hi(ex_hi_o), .ex_lo(ex_lo_o),
-        //输出
+
         .mem_waddr(mem_waddr_i), .mem_reg_we(mem_reg_we_i), .mem_alu_res(mem_alu_res_i),
         .mem_hi_we(mem_hi_we_i), .mem_lo_we(mem_lo_we_i), .mem_hi(mem_hi_i), .mem_lo(mem_lo_i),
-        .mem_inst(mem_inst_i)
+        .mem_inst(mem_inst_i),
+        /*madd、msub*/
+        .cnt_o(ex_cnt_i), .hilo_temp_o(ex_hilo_temp_i)
     );
 
     // MEM阶段
@@ -207,6 +226,7 @@ module openmips (
     wire[`RegBus]   wb_lo_i;
     mem_wb mem_wb_0(
         .rst(rst), .clk(clk),
+        .stall(stall),
         .mem_inst(mem_inst_o),
         .mem_waddr(mem_waddr_o), .mem_reg_we(mem_reg_we_o), .mem_data(mem_alu_res_o),
         .mem_hi_we(mem_hi_we_o), .mem_lo_we(mem_lo_we_o), .mem_hi(mem_hi_o), .mem_lo(mem_lo_o),

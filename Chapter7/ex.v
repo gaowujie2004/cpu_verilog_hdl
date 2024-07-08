@@ -13,6 +13,9 @@ module ex (
     input wire[`RegBus]     hi_i,          //Hi寄存器数据
     input wire[`RegBus]     lo_i,          //Lo寄存器数据
 
+    input wire[1:0]         cnt_i,         //累加乘、累加减使用，第几个周期
+    input wire[`DoubleRegBus] hilo_temp_i, //累加乘、累加减使用，相乘的中间结果
+
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能
@@ -23,7 +26,10 @@ module ex (
     output reg[`RegBus]    hi_o,          //指令执行阶段对Hi写入的数据
     output reg[`RegBus]    lo_o,          //指令执行阶段对Lo写入的数据
 
-    output reg[`StallBus]  stallreq_from_ex,
+    output reg              stallreq,
+
+    output reg[1:0]         cnt_o,         //第几周期
+    output reg[`DoubleRegBus] hilo_temp_o,//相乘中间结果
 
     output wire[`InstBus]  inst_o         //用于调试
 );
@@ -33,6 +39,13 @@ module ex (
     reg [`RegBus] arithmetic_res;       //算术操作运算结果
     wire[4:0]     shift_count = reg2_data_i[4:0];
     assign inst_o = inst_i;
+
+    /*
+     * 值处理
+    */
+    wire[`RegBus] op1_mul;
+    wire[`RegBus] op2_mul;
+
 
     /* 计算：逻辑、位移、移动运算结果 */
     always @(*) begin
@@ -244,5 +257,58 @@ module ex (
         end
     end
 
+    /*
+     * Hi、Lo写入：madd、maddu、msub、msubu
+    */
+    reg stallreq_from_madd_msub;
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            cnt_o       <= 2'b00;
+            hilo_temp_o <= {`ZeroWord, `ZeroWord};
+            stallreq_from_madd_msub <= `NotStop;
+            hi_we_o      <= `WriteDisable;
+            lo_we_o      <= `WriteDisable; 
+        end else if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MADDU_OP || aluop_i==`ALU_MSUB_OP || aluop_i==`ALU_MSUBU_OP) begin
+            if (cnt_i==2'b00) begin
+                //第一个时钟周期
+                if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MSUB_OP) begin
+                    hilo_temp_o <=  $signed(reg1_data_i)*$signed(reg2_data_i);
+                end else begin
+                    hilo_temp_o <=  reg1_data_i*reg2_data_i;
+                end
+                cnt_o        <= 2'b01;
+                stallreq_from_madd_msub <= `Stop;
+                hi_we_o      <= `WriteDisable;
+                lo_we_o      <= `WriteDisable; 
+            end else if (cnt_i == 2'b01) begin
+                //第二个时钟周期
+                if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MADDU_OP) begin
+                    {hi_o, lo_o} <= {hi_i, lo_i} + hilo_temp_i;
+                end else begin
+                    {hi_o, lo_o} <= {hi_i, lo_i} - hilo_temp_i;
+                end
+                hi_we_o      <= `WriteEnable;
+                lo_we_o      <= `WriteEnable; 
+                cnt_o        <= 2'b10;  //Why: 很重要如果因其他原因导致流⽔线保持暂停，那么由于cnt_o为2'b10，所以EX阶段不再计算，从⽽防⽌乘累加指令重复运⾏。
+                stallreq_from_madd_msub <= `NotStop;
+            end
+        end else begin
+            cnt_o <= 2'b00;
+            hilo_temp_o <= {`ZeroWord, `ZeroWord};
+            stallreq_from_madd_msub <= `NotStop;
+        end
+    end
+
+    /*
+     * 流水线暂停信号
+    */
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            stallreq <= `NotStop;
+        end else begin
+            stallreq <= stallreq_from_madd_msub;
+            $display("。。。。。。。。。。。。。。。。。。。。。。。。 inst=%h, stallreq=%h", inst_i, stallreq_from_madd_msub);
+        end
+    end
     
 endmodule
