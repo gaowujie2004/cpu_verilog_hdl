@@ -1,4 +1,7 @@
-// 流水线寄存器ID/EX（ID译码取操作数输入、输出到EX执行阶段）
+/*
+ * 目的：ID阶段结束，下一个时钟上升沿保存ID阶段的结果，立即输出到EX阶段
+ * 输入：ID阶段、输出：EX阶段
+*/
 
 `include "defines.v"
 module id_ex (

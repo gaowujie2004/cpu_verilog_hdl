@@ -1,4 +1,6 @@
-// 流水线寄存器IF/ID
+/*
+ * 目的：IF阶段结束，下一个时钟上升沿保存到IF阶段的结果，并立即输出到ID阶段。
+*/
 
 `include "defines.v"
 module if_id (
