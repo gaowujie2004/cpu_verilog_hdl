@@ -23,6 +23,8 @@ module ex (
     output reg[`RegBus]    hi_o,          //指令执行阶段对Hi写入的数据
     output reg[`RegBus]    lo_o,          //指令执行阶段对Lo写入的数据
 
+    output reg[`StallBus]  stallreq_from_ex,
+
     output wire[`InstBus]  inst_o         //用于调试
 );
     reg [`RegBus] logic_res;            //保存逻辑运算结果

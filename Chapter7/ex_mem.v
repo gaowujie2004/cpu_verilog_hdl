@@ -1,9 +1,14 @@
 `include "defines.v"
-
-// EX/MEM 流水线寄存器
+/*
+ * EX/MEM流水寄存器
+ * 目的：EX阶段结束，下一个时钟上升沿保存EX阶段的结果，立即输出到MEM阶段
+ * 输入：EX阶段、输出：MEM阶段
+*/
 module ex_mem (
     input wire rst,
     input wire clk,
+    input wire[`StallBus] stall,
+    
     input wire[`InstBus]    ex_inst,      //debuger
 
     input wire[`RegAddrBus] ex_waddr,     //目标寄存器地址
@@ -39,16 +44,40 @@ module ex_mem (
             mem_lo_we   <= `WriteDisable;
             mem_hi      <= `ZeroWord;
             mem_lo      <= `ZeroWord;
-            mem_inst      <= `ZeroWord;
-        end else begin 
-            mem_waddr <= ex_waddr;
-            mem_reg_we <= ex_reg_we;
-            mem_alu_res <= ex_alu_res;
-            mem_hi_we   <= ex_hi_we;
-            mem_lo_we   <= ex_lo_we;
-            mem_hi      <= ex_hi;
-            mem_lo      <= ex_lo;
-            mem_inst    <= ex_inst;
+            mem_inst    <= `ZeroWord;
+        end else begin
+            if (stall[3]==`Stop && stall[4]==`NotStop) begin
+                /*
+                 * EX阶段暂停，⽽MEM阶段继续，所以使⽤NOP作为下⼀个周期进⼊MEM阶段的指令
+                 * EX阶段结束，下一个周期一到：
+                 *   1.原本的MEM阶段的指令进入WB阶段
+                 *   2.MEM阶段是NOP指令
+                */
+                mem_waddr   <= `NOPRegAddr;
+                mem_reg_we  <= `WriteDisable;
+                mem_alu_res <= `ZeroWord;
+                mem_hi_we   <= `WriteDisable;
+                mem_lo_we   <= `WriteDisable;
+                mem_hi      <= `ZeroWord;
+                mem_lo      <= `ZeroWord;
+                mem_inst    <= ex_inst;         //debuger
+            end else if (stall[3] == `NotStop) begin
+                /*
+                 * MEM阶段继续，那其他情况就不用考虑了，直接继续执行进入下个阶段
+                */                
+                mem_waddr   <= ex_waddr;
+                mem_reg_we  <= ex_reg_we;
+                mem_alu_res <= ex_alu_res;
+                mem_hi_we   <= ex_hi_we;
+                mem_lo_we   <= ex_lo_we;
+                mem_hi      <= ex_hi;
+                mem_lo      <= ex_lo;
+                mem_inst    <= ex_inst;                
+            end else begin
+                /*
+                 * 其余情况，保持流水线寄存器的值
+                */    
+            end
         end
     end
     

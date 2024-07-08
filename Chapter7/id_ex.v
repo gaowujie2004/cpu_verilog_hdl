@@ -7,6 +7,8 @@
 module id_ex (
     input wire rst,
     input wire clk,
+    input wire[`StallBus] stall,
+
     input wire[`InstBus]    id_inst,        //调试目的
     input wire[`AluSelBus]  id_alusel,
     input wire[`AluOpBus]   id_aluop,
@@ -34,14 +36,26 @@ module id_ex (
 			ex_waddr <= `NOPRegAddr;
 			ex_reg_we <= `WriteDisable;
             ex_inst  <= `ZeroWord;
-        end else begin 
-			ex_alusel <= id_alusel;
-            ex_aluop <= id_aluop;
-			ex_reg1_data <= id_reg1_data;
-			ex_reg2_data <= id_reg2_data;
-			ex_waddr <= id_waddr;
-			ex_reg_we <= id_reg_we;	
-            ex_inst  <= id_inst;
+        end else begin
+            if (stall[2]==`Stop && stall[3]==`NotStop) begin
+                ex_alusel <= `ALU_RES_NOP;
+                ex_aluop  <= `ALU_NOP_OP;
+                ex_reg1_data <= `ZeroWord;
+                ex_reg2_data <= `ZeroWord;
+                ex_waddr  <= `NOPRegAddr;
+                ex_reg_we <= `WriteDisable;
+                ex_inst   <= id_inst;                
+            end else if(stall[2] == `NotStop) begin
+                ex_alusel <= id_alusel;
+                ex_aluop <= id_aluop;
+                ex_reg1_data <= id_reg1_data;
+                ex_reg2_data <= id_reg2_data;
+                ex_waddr <= id_waddr;
+                ex_reg_we <= id_reg_we;	
+                ex_inst  <= id_inst;                
+            end else begin
+                // not change
+            end
         end
     end
     

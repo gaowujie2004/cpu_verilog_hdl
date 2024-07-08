@@ -45,6 +45,17 @@ module openmips (
     wire[`RegAddrBus] id_waddr_o;
     wire              id_wreg_o;
 
+
+    // stall_ctrl部件
+    wire stallreq_from_id;
+    wire stallreq_from_ex;
+    wire[`StallBus] stall;
+    stall_ctrl stall_ctrl_0(
+        .stallreq_from_id(stallreq_from_id),
+        .stallreq_from_ex(stallreq_from_ex),
+        .stall(stall)
+    );
+
     // ID阶段      
     wire[`RegAddrBus]  ex_waddr_o;     // EX阶段，数据转发
     wire               ex_reg_we_o;
@@ -77,6 +88,8 @@ module openmips (
         .reg1_addr_o(id_reg1_addr_o),
         .reg2_read_o(id_reg2_read_o),
         .reg2_addr_o(id_reg2_addr_o),
+        //送入stall_ctrl模块
+        .stallreq_from_id(stallreq_from_id),
         //调试目的
         .inst_o(id_inst_o)
     );
@@ -142,6 +155,8 @@ module openmips (
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o),
         /*写hilo相关信号*/
         .hi_we_o(ex_hi_we_o), .lo_we_o(ex_lo_we_o), .hi_o(ex_hi_o), .lo_o(ex_lo_o),
+        /*送入stall_ctrl模块*/
+        .stallreq_from_ex(stallreq_from_id),
             //debuger
         .inst_o(ex_inst_o)
     );

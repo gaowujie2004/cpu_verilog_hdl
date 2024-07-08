@@ -14,6 +14,17 @@
 `define False_v 1'b0
 `define ChipEnable 1'b1
 `define ChipDisable 1'b0
+/*
+ * stall[0]  PC
+ * stall[1]  IF/ID
+ * stall[2]  ID/EX
+ * stall[3]  EX/MEM
+ * stall[4]  MEM/WB
+ * stall[5] Regfile、HiLo
+*/
+`define StallBus  5:0
+`define Stop      1'b1
+`define NotStop   1'b0
 
 
 //指令相关

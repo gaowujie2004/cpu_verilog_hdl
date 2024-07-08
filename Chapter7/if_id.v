@@ -6,6 +6,8 @@
 module if_id (
     input wire rst,
     input wire clk,
+    input wire[`StallBus] stall,
+
     input wire[`InstAddrBus] if_pc,
     input wire[`InstBus]     if_inst,
 
@@ -19,8 +21,15 @@ module if_id (
             id_pc <= `ZeroWord;
             id_inst <= `ZeroWord;   //NOP空指令
         end else begin 
-            id_pc <= if_pc;
-            id_inst <= if_inst;
+            if (stall[1]==`Stop && stall[2]==`NotStop) begin
+                id_pc   <= `ZeroWord;
+                id_inst <= `ZeroWord;
+            end else if (stall[1]==`NotStop) begin
+                id_pc <= if_pc;
+                id_inst <= if_inst;                
+            end else begin
+                // 保持不变
+            end
         end
     end
     
