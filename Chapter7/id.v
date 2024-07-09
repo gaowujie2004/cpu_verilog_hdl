@@ -58,9 +58,12 @@ module id (
             reg2_data_o <= `ZeroWord;
 			imm32 <= 32'b0;	
         end else begin
+            // TODO:很重要，inst_i为xxx时，就体现出来了，分支一定要覆盖全面。
             wreg_o      <= `WriteDisable;
             reg1_read_o <= `ReadDisable;
             reg2_read_o <= `ReadDisable; 
+            aluop_o     <= `ALU_NOP_OP;
+            alusel_o    <= `ALU_RES_NOP;
 
             case (op)
                 `OP_SPECIAL_INST: begin             // R型指令
