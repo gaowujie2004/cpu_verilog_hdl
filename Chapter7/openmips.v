@@ -156,6 +156,14 @@ module openmips (
     wire[1:0]        ex_cnt_i;         //madd(u) msub(u)
     wire[`DoubleRegBus] ex_hilo_temp_i;//madd(u) msub(u)
 
+    wire signed_div_i;
+    wire start_i;
+    wire[`RegBus] opdata1_i;
+    wire[`RegBus] opdata2_i;
+    wire[`DoubleRegBus] div_result_o;
+    wire                div_ready_o;
+
+
     ex ex_0(
         .rst(rst), .inst_i(ex_inst_i),
         .alusel_i(ex_alusel_i), .aluop_i(ex_aluop_i),
@@ -163,6 +171,7 @@ module openmips (
         .waddr_i(ex_waddr_i), .reg_we_i(ex_wreg_i),
         .hi_i(ex_hi_i), .lo_i(ex_lo_i),
         .cnt_i(ex_cnt_i), .hilo_temp_i(ex_hilo_temp_i),
+        .div_result_i(div_result_o), .div_ready_i(div_ready_o),
 
         /*写regfile相关信号*/
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o),
@@ -173,8 +182,24 @@ module openmips (
         /*debuger*/
         .inst_o(ex_inst_o),
         /*madd(u) msub(u)*/
-        .cnt_o(ex_cnt_o), .hilo_temp_o(ex_hilo_temp_o)
+        .cnt_o(ex_cnt_o), .hilo_temp_o(ex_hilo_temp_o),
+        .div_signed_o(signed_div_i),
+        .div_start_o(start_i),
+        .div_op1_o(opdata1_i),
+        .div_op2_o(opdata2_i)
     );
+    div div_0(
+    	.clk(clk), .rst(rst),
+        .signed_div_i (signed_div_i ),
+        .opdata1_i    (opdata1_i    ),
+        .opdata2_i    (opdata2_i    ),
+        .start_i      (start_i      ),
+        .cancel_i     (1'b0         ),
+        
+        .result_o     (div_result_o ),
+        .ready_o      (div_ready_o  )
+    );
+    
 
 
     // EX_MEM寄存器

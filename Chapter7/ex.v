@@ -16,6 +16,9 @@ module ex (
     input wire[1:0]         cnt_i,         //累加乘、累加减使用，第几个周期
     input wire[`DoubleRegBus] hilo_temp_i, //累加乘、累加减使用，相乘的中间结果
 
+    input wire[`DoubleRegBus] div_result_i, //div指令结果
+    input wire                div_ready_i,  //div模块是否可读
+
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能
@@ -29,17 +32,31 @@ module ex (
     output reg              stallreq,
 
     output reg[1:0]         cnt_o,         //第几周期
-    output reg[`DoubleRegBus] hilo_temp_o,//相乘中间结果
+    output reg[`DoubleRegBus] hilo_temp_o, //相乘中间结果
 
-    output wire[`InstBus]  inst_o         //用于调试
+    output wire[`InstBus]  inst_o,         //用于调试
+
+    output wire            div_signed_o,   //是否有符号div
+    output wire[`RegBus]   div_op1_o,      //被除数
+    output wire[`RegBus]   div_op2_o,      //除数
+    output wire            div_start_o     //div开始工作
 );
     reg [`RegBus] logic_res;            //保存逻辑运算结果
     reg [`RegBus] shift_res;            //保存位移运算结果
     reg [`RegBus] move_res;             //移动操作运算结果
     reg [`RegBus] arithmetic_res;       //算术操作运算结果
     wire[4:0]     shift_count = reg2_data_i[4:0];
-    assign inst_o = inst_i;
 
+    assign inst_o = inst_i;
+    assign div_op1_o = reg1_data_i;
+    assign div_op2_o = reg2_data_i;
+    assign div_signed_o = aluop_i==`ALU_DIV_OP;
+    assign div_start_o  = aluop_i==`ALU_DIV_OP || aluop_i==`ALU_DIVU_OP;
+
+    always @(*) begin
+        $display("EX    div_inst=%b,  div_signed_o=%b,   aluop=%h",  div_start_o, div_signed_o, aluop_i);
+        
+    end
     /*
      * 值处理
     */
@@ -102,6 +119,8 @@ module ex (
             endcase
         end
     end
+
+
 
     /*
      * 计算：简单算术运算结果
@@ -300,14 +319,40 @@ module ex (
     end
 
     /*
+     * Hi、Lo写入：div、divu
+    */
+    reg stallreq_from_div;
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            stallreq_from_div <= `NotStop;
+            hi_we_o <= `WriteDisable;
+            lo_we_o <= `WriteDisable;
+        end else begin
+            if (aluop_i==`ALU_DIV_OP || aluop_i==`ALU_DIVU_OP) begin
+                if (div_ready_i) begin
+                    stallreq_from_div <= `NotStop;
+                    hi_we_o <= `WriteEnable;
+                    lo_we_o <= `WriteEnable;
+                    {hi_o, lo_o} <= div_result_i;
+                end else begin
+                    stallreq_from_div <= `Stop;
+                    hi_we_o <= `WriteDisable;
+                    lo_we_o <= `WriteDisable;
+                end
+            end else begin
+                stallreq_from_div <= `NotStop;
+            end
+        end
+    end
+
+    /*
      * 流水线暂停信号
     */
     always @(*) begin
         if (rst == `RstEnable) begin
             stallreq <= `NotStop;
         end else begin
-            stallreq <= stallreq_from_madd_msub;
-            $display("。。。。。。。。。。。。。。。。。。。。。。。。 inst=%h, stallreq=%h", inst_i, stallreq_from_madd_msub);
+            stallreq <= (stallreq_from_madd_msub || stallreq_from_div);
         end
     end
     

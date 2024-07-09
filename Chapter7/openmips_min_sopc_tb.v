@@ -17,7 +17,7 @@ module openmips_min_sopc_tb();
     initial begin
         rst = `RstEnable;
         #195 rst = `RstDisable;
-        #1000 $stop;
+        #4000 $stop;
     end
 
     //元件例化

@@ -82,6 +82,9 @@
 `define FUNC_MSUB  6'b000100
 `define FUNC_MSUBU 6'b000101
 
+`define FUNC_DIV   6'b011010
+`define FUNC_DIVU  6'b011011
+
 `define OP_SPECIAL_INST  6'b000000
 `define OP_SPECIAL2_INST 6'b011100
 `define OP_REGIMM_INST   6'b000001
@@ -122,6 +125,9 @@
 `define ALU_MSUB_OP  8'b10101010
 `define ALU_MSUBU_OP 8'b10101011
 
+`define ALU_DIV_OP   8'b00011010
+`define ALU_DIVU_OP  8'b00011011
+
 `define ALU_NOP_OP   8'b00000000
 // AluSel
 `define ALU_RES_LOGIC 3'b001         //逻辑运算
@@ -131,6 +137,16 @@
 `define ALU_RES_MUL   3'b101         //乘法（Hi、Lo保存结果）
 
 `define ALU_RES_NOP   3'b000         
+
+//DIV模块相关
+`define DivFree 2'b00 
+`define DivByZero 2'b01 
+`define DivOn 2'b10 
+`define DivEnd 2'b11 
+`define DivResultReady 1'b1 
+`define DivResultNotReady 1'b0 
+`define DivStart 1'b1 
+`define DivStop 1'b0
 
 
 //指令存储器相关

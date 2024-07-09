@@ -32,7 +32,7 @@
     "verilog.ctags.path": "D:\\download\\ctags-v6.1.0-x64||ctags.exe",
     "systemverilogFormatter.veribleBuild": "win64",
     "systemverilogFormatter.commandLineArguments": "--column_limit 90 --indentation_spaces 4",
-    "editor.formatOnSave": true,
+    // "editor.formatOnSave": true,
     "[verilog]": {
         "editor.defaultFormatter": "bmpenuelas.systemverilog-formatter-vscode"
     }

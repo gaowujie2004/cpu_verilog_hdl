@@ -370,7 +370,21 @@ module id (
                                 //读2控制
                                 reg2_read_o <= `ReadEnable;
                                 reg2_addr_o <= rt;                                   
-                            end                         
+                            end
+
+                            `FUNC_DIV, `FUNC_DIVU: begin          //{hi, lo} <- R[rs] / R[rt]
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP;  //通用寄存器不写
+                                aluop_o   <= func==`FUNC_DIV ? `ALU_DIV_OP : `ALU_DIVU_OP;
+                                //写控制
+                                wreg_o    <= `WriteDisable; //通用寄存器不写
+                                //读1控制
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2控制
+                                reg2_read_o <= `ReadEnable;
+                                reg2_addr_o <= rt;     
+                            end                   
 
                             default: begin
                                 instvalid <= `False_v;
