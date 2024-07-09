@@ -39,7 +39,7 @@ module ex (
     output wire            div_signed_o,   //是否有符号div
     output wire[`RegBus]   div_op1_o,      //被除数
     output wire[`RegBus]   div_op2_o,      //除数
-    output wire            div_start_o     //div开始工作
+    output reg             div_start_o     //div开始工作
 );
     reg [`RegBus] logic_res;            //保存逻辑运算结果
     reg [`RegBus] shift_res;            //保存位移运算结果
@@ -48,15 +48,6 @@ module ex (
     wire[4:0]     shift_count = reg2_data_i[4:0];
 
     assign inst_o = inst_i;
-    assign div_op1_o = reg1_data_i;
-    assign div_op2_o = reg2_data_i;
-    assign div_signed_o = aluop_i==`ALU_DIV_OP;
-    assign div_start_o  = aluop_i==`ALU_DIV_OP || aluop_i==`ALU_DIVU_OP;
-
-    always @(*) begin
-        $display("EX    div_inst=%b,  div_signed_o=%b,   aluop=%h",  div_start_o, div_signed_o, aluop_i);
-        
-    end
     /*
      * 值处理
     */
@@ -321,6 +312,9 @@ module ex (
     /*
      * Hi、Lo写入：div、divu
     */
+    assign div_op1_o = reg1_data_i;
+    assign div_op2_o = reg2_data_i;
+    assign div_signed_o = aluop_i==`ALU_DIV_OP;
     reg stallreq_from_div;
     always @(*) begin
         if (rst == `RstEnable) begin
@@ -329,18 +323,21 @@ module ex (
             lo_we_o <= `WriteDisable;
         end else begin
             if (aluop_i==`ALU_DIV_OP || aluop_i==`ALU_DIVU_OP) begin
-                if (div_ready_i) begin
+                if (div_ready_i == `DivResultReady) begin
+                    div_start_o       <= `DivStop;
                     stallreq_from_div <= `NotStop;
                     hi_we_o <= `WriteEnable;
                     lo_we_o <= `WriteEnable;
                     {hi_o, lo_o} <= div_result_i;
                 end else begin
+                    div_start_o       <= `DivStart;
                     stallreq_from_div <= `Stop;
                     hi_we_o <= `WriteDisable;
                     lo_we_o <= `WriteDisable;
                 end
             end else begin
                 stallreq_from_div <= `NotStop;
+			    div_start_o <= `DivStop;
             end
         end
     end
@@ -355,5 +352,4 @@ module ex (
             stallreq <= (stallreq_from_madd_msub || stallreq_from_div);
         end
     end
-    
 endmodule
