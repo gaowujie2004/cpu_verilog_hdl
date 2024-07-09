@@ -178,7 +178,7 @@ module ex (
     end
 
     /*
-     * 选择结果：根据alusel_i选择运算结果输出
+     * Write Regfile选择结果：根据alusel_i选择运算结果输出
     */
     always @(*) begin
         waddr_o <= waddr_i;
@@ -212,8 +212,82 @@ module ex (
         endcase
     end
 
+
     /*
-     * Hi、Lo写入：mtlo、mthi、mult、multu需要给出，hi、lo写使能以及写入数据
+     * 计算：madd、maddu、msub、msubu
+    */
+    reg[`DoubleRegBus] madd_msub_hilo_data;
+    reg                madd_msub_hilo_we;
+    reg                stallreq_from_madd_msub;
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            cnt_o       <= 2'b00;
+            hilo_temp_o <= {`ZeroWord, `ZeroWord};
+            stallreq_from_madd_msub <= `NotStop;
+        end else if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MADDU_OP || aluop_i==`ALU_MSUB_OP || aluop_i==`ALU_MSUBU_OP) begin
+            if (cnt_i==2'b00) begin
+                //第一个时钟周期
+                if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MSUB_OP) begin
+                    hilo_temp_o <=  $signed(reg1_data_i)*$signed(reg2_data_i);
+                end else begin
+                    hilo_temp_o <=  reg1_data_i*reg2_data_i;
+                end
+
+                madd_msub_hilo_we       <= `WriteDisable;
+                cnt_o                   <= 2'b01;
+                stallreq_from_madd_msub <= `Stop;
+            end else if (cnt_i == 2'b01) begin
+                //第二个时钟周期
+                if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MADDU_OP) begin
+                   madd_msub_hilo_data <= {hi_i, lo_i} + hilo_temp_i;
+                end else begin
+                   madd_msub_hilo_data <= {hi_i, lo_i} - hilo_temp_i;
+                end
+
+                madd_msub_hilo_we       <= `WriteEnable;
+                //Why: 很重要如果因其他原因导致流⽔线保持暂停，那么由于cnt_o为2'b10，所以EX阶段不再计算，从⽽防⽌乘累加指令重复运⾏。
+                cnt_o                   <= 2'b10;  
+                stallreq_from_madd_msub <= `NotStop;
+            end
+        end else begin
+            cnt_o                   <= 2'b00;
+            stallreq_from_madd_msub <= `NotStop;
+            hilo_temp_o             <= {`ZeroWord, `ZeroWord};
+        end
+    end
+
+    /*
+     * 计算：div、divu
+    */
+    assign div_op1_o = reg1_data_i;
+    assign div_op2_o = reg2_data_i;
+    assign div_signed_o = aluop_i==`ALU_DIV_OP;
+    reg stallreq_from_div;
+    reg div_hilo_we;
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            stallreq_from_div <= `NotStop;
+            div_start_o       <= `DivStop;
+        end else begin
+            if (aluop_i==`ALU_DIV_OP || aluop_i==`ALU_DIVU_OP) begin
+                if (div_ready_i == `DivResultReady) begin
+                    div_start_o       <= `DivStop;
+                    stallreq_from_div <= `NotStop;
+                    div_hilo_we       <= `WriteEnable;
+                end else begin
+                    div_start_o       <= `DivStart;
+                    stallreq_from_div <= `Stop;
+                    div_hilo_we       <= `WriteDisable;
+                end
+            end else begin
+                stallreq_from_div <= `NotStop;
+			    div_start_o       <= `DivStop;
+            end
+        end
+    end
+
+    /*
+     * Hi、Lo、HiLo_WE，信号生成
      * 此信号非传递信号，而是在该阶段产生的
     */
     always @(*) begin
@@ -251,6 +325,40 @@ module ex (
                     lo_we_o <= `WriteEnable;
                 end
 
+
+                /*
+                 * madd、maddu、msub、msubu
+                 * RTL: {Hi,Lo} <- {Hi,Lo} +/- rs*rt
+                */
+                `ALU_MADD_OP, `ALU_MADDU_OP, `ALU_MSUB_OP, `ALU_MSUBU_OP: begin
+                    if (madd_msub_hilo_we == `WriteEnable) begin
+                        {hi_o, lo_o} <= madd_msub_hilo_data;
+                        hi_we_o <= `WriteEnable;
+                        lo_we_o <= `WriteEnable;
+                    end else if (cnt_i==2'b10) begin
+                        hi_we_o <= `WriteDisable;
+                        lo_we_o <= `WriteDisable;  
+                    end
+                end
+
+
+                /*
+                 * div、divu
+                 * RLT: {Hi,Lo} <- rs/rt，Lo=商，Hi=余数
+                */
+                `ALU_DIV_OP, `ALU_DIVU_OP: begin
+                    //更加严谨一些
+                    if (div_hilo_we) begin
+                        hi_we_o <= `WriteEnable;
+                        lo_we_o <= `WriteEnable;
+                        {hi_o, lo_o} <= div_result_i;
+                    end else begin
+                        hi_we_o <= `WriteDisable;
+                        lo_we_o <= `WriteDisable;                     
+                    end
+                end
+
+
                 default: begin
                     hi_we_o <= `WriteDisable;
                     hi_o    <= `ZeroWord;
@@ -258,81 +366,6 @@ module ex (
                     lo_o    <= `ZeroWord;
                 end
             endcase
-        end
-    end
-
-    /*
-     * Hi、Lo写入：madd、maddu、msub、msubu
-    */
-    reg stallreq_from_madd_msub;
-    always @(*) begin
-        if (rst == `RstEnable) begin
-            cnt_o       <= 2'b00;
-            hilo_temp_o <= {`ZeroWord, `ZeroWord};
-            stallreq_from_madd_msub <= `NotStop;
-            hi_we_o      <= `WriteDisable;
-            lo_we_o      <= `WriteDisable; 
-        end else if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MADDU_OP || aluop_i==`ALU_MSUB_OP || aluop_i==`ALU_MSUBU_OP) begin
-            if (cnt_i==2'b00) begin
-                //第一个时钟周期
-                if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MSUB_OP) begin
-                    hilo_temp_o <=  $signed(reg1_data_i)*$signed(reg2_data_i);
-                end else begin
-                    hilo_temp_o <=  reg1_data_i*reg2_data_i;
-                end
-                cnt_o        <= 2'b01;
-                stallreq_from_madd_msub <= `Stop;
-                hi_we_o      <= `WriteDisable;
-                lo_we_o      <= `WriteDisable; 
-            end else if (cnt_i == 2'b01) begin
-                //第二个时钟周期
-                if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MADDU_OP) begin
-                    {hi_o, lo_o} <= {hi_i, lo_i} + hilo_temp_i;
-                end else begin
-                    {hi_o, lo_o} <= {hi_i, lo_i} - hilo_temp_i;
-                end
-                hi_we_o      <= `WriteEnable;
-                lo_we_o      <= `WriteEnable; 
-                cnt_o        <= 2'b10;  //Why: 很重要如果因其他原因导致流⽔线保持暂停，那么由于cnt_o为2'b10，所以EX阶段不再计算，从⽽防⽌乘累加指令重复运⾏。
-                stallreq_from_madd_msub <= `NotStop;
-            end
-        end else begin
-            cnt_o <= 2'b00;
-            hilo_temp_o <= {`ZeroWord, `ZeroWord};
-            stallreq_from_madd_msub <= `NotStop;
-        end
-    end
-
-    /*
-     * Hi、Lo写入：div、divu
-    */
-    assign div_op1_o = reg1_data_i;
-    assign div_op2_o = reg2_data_i;
-    assign div_signed_o = aluop_i==`ALU_DIV_OP;
-    reg stallreq_from_div;
-    always @(*) begin
-        if (rst == `RstEnable) begin
-            stallreq_from_div <= `NotStop;
-            hi_we_o <= `WriteDisable;
-            lo_we_o <= `WriteDisable;
-        end else begin
-            if (aluop_i==`ALU_DIV_OP || aluop_i==`ALU_DIVU_OP) begin
-                if (div_ready_i == `DivResultReady) begin
-                    div_start_o       <= `DivStop;
-                    stallreq_from_div <= `NotStop;
-                    hi_we_o <= `WriteEnable;
-                    lo_we_o <= `WriteEnable;
-                    {hi_o, lo_o} <= div_result_i;
-                end else begin
-                    div_start_o       <= `DivStart;
-                    stallreq_from_div <= `Stop;
-                    hi_we_o <= `WriteDisable;
-                    lo_we_o <= `WriteDisable;
-                end
-            end else begin
-                stallreq_from_div <= `NotStop;
-			    div_start_o <= `DivStop;
-            end
         end
     end
 
