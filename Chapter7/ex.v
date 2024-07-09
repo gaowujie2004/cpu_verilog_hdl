@@ -48,12 +48,6 @@ module ex (
     wire[4:0]     shift_count = reg2_data_i[4:0];
 
     assign inst_o = inst_i;
-    /*
-     * 值处理
-    */
-    wire[`RegBus] op1_mul;
-    wire[`RegBus] op2_mul;
-
 
     /* 计算：逻辑、位移、移动运算结果 */
     always @(*) begin
