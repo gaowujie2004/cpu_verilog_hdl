@@ -298,22 +298,28 @@ module ex (
             lo_o    <= `ZeroWord;
         end else begin
             case (aluop_i)
+                /*
+                 * HiLo Move Regfile
+                 * RTL: Hi/Lo <- R[rs]
+                */
                 `ALU_MTHI_OP: begin             //mthi rs。hi <- R[rs]
                     hi_we_o <= `WriteEnable;
                     hi_o    <= reg1_data_i;
-
                     lo_we_o <= `WriteDisable;
                     lo_o    <= `ZeroWord;
                 end
-
                 `ALU_MTLO_OP: begin
                     lo_we_o <= `WriteEnable;    //mtlo rs。lo <- R[rs]
                     lo_o    <= reg1_data_i;
-
                     hi_we_o <= `WriteDisable;
                     hi_o    <= `ZeroWord;
                 end
 
+
+                /*
+                 * mult、multu
+                 * RTL: {hi,lo} <- R[rs]*R[rt]
+                */
                 `ALU_MULT_OP: begin         //{hi, lo} <- rs × rt，有符号
                     {hi_o, lo_o} <= $signed(reg1_data_i)  * $signed(reg2_data_i);
                     hi_we_o <= `WriteEnable;
