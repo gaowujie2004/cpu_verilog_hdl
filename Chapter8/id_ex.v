@@ -16,6 +16,9 @@ module id_ex (
     input wire[`RegBus]     id_reg2_data,   //源操作数2
     input wire[`RegAddrBus] id_waddr,       //目标寄存器地址
     input wire              id_reg_we,      //目标寄存器写使能
+    input wire              id_is_in_delayslot, //ID阶段的指令是否是延迟槽指令
+    input wire[`InstAddrBus] id_link_address,    //返回地址，写入目的寄存器
+    input wire              id_next_inst_in_delayslot,
 
     output reg[`AluSelBus]  ex_alusel,
     output reg[`AluOpBus]   ex_aluop,
@@ -23,7 +26,10 @@ module id_ex (
     output reg[`RegBus]     ex_reg2_data,   //源操作数2
     output reg[`RegAddrBus] ex_waddr,       //目标寄存器地址
     output reg              ex_reg_we,      //目标寄存器写使能
-    output reg[`InstBus]    ex_inst         //调试目的
+    output reg[`InstBus]    ex_inst,        //调试目的
+    output reg              ex_is_indelayslot, //ID阶段的指令是否是延迟槽指令
+    output reg[`InstAddrBus]ex_link_address,   //返回地址，写入目的寄存器
+    output reg              is_in_delayslot
 );
 
     always @(posedge clk) begin

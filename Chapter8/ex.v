@@ -19,6 +19,9 @@ module ex (
     input wire[`DoubleRegBus] div_result_i, //div指令结果
     input wire                div_ready_i,  //div模块是否可读
 
+    input wire                is_in_delayslot_i,    //延迟槽指令
+    input wire                link_address_i,       //保存的返回地址
+
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能

@@ -8,6 +8,8 @@ module id (
 
     input wire[`RegBus] reg1_data_i,        // 从regfile读的数据
     input wire[`RegBus] reg2_data_i,        // 从regfile读的数据
+
+    input wire          is_in_delayslot_i,  // ID/EX输入
     
     // 流水寄存器保存
     output reg[`AluSelBus] alusel_o,        // 运算类型？            
@@ -16,6 +18,13 @@ module id (
     output reg[`RegBus]    reg2_data_o,     // 源操作数2(从regfile模块读取)
     output reg[`RegAddrBus]    waddr_o,     // 目标寄存器地址
     output reg                 wreg_o,      // 写使能
+
+    output reg         is_in_delayslot_o,   // 本阶段生成
+    output reg[`InstAddrBus] link_addr_o,    // 本阶段生成，跳转指令的返回地址(跳转指令的下一条指令)
+    output reg next_inst_in_delayslot_o,     // 本阶段生成
+    output reg[`InstAddrBus] branch_target_o,// 本阶段生成->pc.v，跳转指令目的地址
+    output reg branch_flag_o,                // 本阶段生成->pc.v，是否跳转
+    
     
     // 传送给Refile模块
     output reg reg1_read_o,                 // reg1读使能

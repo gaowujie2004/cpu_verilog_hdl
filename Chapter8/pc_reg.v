@@ -4,6 +4,8 @@ module pc_reg (
     input wire rst,
     input wire clk,
     input wire[`StallBus] stall,
+    input wire[`InstAddrBus] branch_target_address_i,   //跳转目的地址
+    input wire               branch_flag_i,             //是否跳转
 
     output reg[`InstAddrBus] pc,
     output reg ce
