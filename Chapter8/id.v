@@ -48,10 +48,14 @@ module id (
     reg[`RegBus] imm32;             // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
     reg instvalid;                  // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
 
-    // 信号传递
+    /*
+     * 信号传递
+    */
     assign inst_o = inst_i;
 
-    // 第一段：指令译码，各种控制信号
+    /*
+     * 第一段：指令译码，各种控制信号
+    */
     always @(*) begin
         if (rst == `RstEnable) begin
             aluop_o <= `ALU_NOP_OP;
@@ -691,7 +695,9 @@ module id (
         end
     end
     
-    // 第二段：选择运算源操作数1
+    /*
+     * 第二段：选择运算源操作数1
+    */
     always @(*) begin
         if (rst == `RstEnable) begin
             reg1_data_o <= `ZeroWord;
@@ -702,7 +708,9 @@ module id (
         end
     end
 
-    // 第三段：选择运算源操作数2
+    /*
+     * 第三段：选择运算源操作数2
+    */
     always @(*) begin
         if (rst == `RstEnable) begin
             reg2_data_o <= `ZeroWord;
