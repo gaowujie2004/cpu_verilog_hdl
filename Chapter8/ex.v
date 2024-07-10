@@ -20,7 +20,7 @@ module ex (
     input wire                div_ready_i,  //div模块是否可读
 
     input wire                is_in_delayslot_i,    //EX阶段的指令是否为延迟槽指令
-    input wire                link_address_i,       //保存的返回地址
+    input wire[`InstAddrBus]  link_address_i,       //保存的返回地址
 
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
