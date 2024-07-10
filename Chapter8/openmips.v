@@ -14,14 +14,17 @@ module openmips (
     wire stallreq_from_id;
     wire stallreq_from_ex;
     wire[`StallBus] stall;
-
+    wire[`InstAddrBus] branch_target_address_o;
+    wire               branch_flag_o;
     // IF阶段
     wire[`InstAddrBus] if_pc;
     pc_reg pc_reg_0(
         .rst(rst),
         .clk(clk),
         .stall(stall),
-
+        .branch_flag_i(branch_flag_o),
+        .branch_target_address_i(branch_target_address_o),
+        
         .pc(if_pc),
         .ce(rom_ce_o)
     );
@@ -43,17 +46,6 @@ module openmips (
         .id_inst(id_inst_i)
     );
 
-    wire[`RegBus] id_reg1_data_i;  //regfile模块输出
-    wire[`RegBus] id_reg2_data_i;
-
-    wire[`AluSelBus] id_alusel_o;  //送入流水寄存器
-    wire[`AluOpBus] id_aluop_o;
-    wire[`RegBus] id_reg1_data_o;
-    wire[`RegBus] id_reg2_data_o;
-    wire[`RegAddrBus] id_waddr_o;
-    wire              id_wreg_o;
-
-
     stall_ctrl stall_ctrl_0(
         .rst(rst),
         .stallreq_from_id(stallreq_from_id),
@@ -63,6 +55,17 @@ module openmips (
     );
 
     // ID阶段      
+    wire[`AluSelBus] id_alusel_o;  //送入流水寄存器
+    wire[`AluOpBus] id_aluop_o;
+    wire[`RegBus] id_reg1_data_o;
+    wire[`RegBus] id_reg2_data_o;
+    wire[`RegAddrBus] id_waddr_o;
+    wire              id_wreg_o;
+    wire         id_is_in_delayslot_o; 
+    wire[`InstAddrBus] id_link_addr_o;   
+    wire  id_next_inst_in_delayslot_o;    
+
+
     wire[`RegAddrBus]  ex_waddr_o;     // EX阶段，数据转发
     wire               ex_reg_we_o;
     wire[`RegBus]      ex_alu_res_o;
@@ -72,15 +75,20 @@ module openmips (
     wire               mem_reg_we_o;
     wire[`RegBus]      mem_alu_res_o;
 
+    wire[`RegBus] id_reg1_data_i;  //regfile模块输出
+    wire[`RegBus] id_reg2_data_i;
+
     wire              id_reg1_read_o;  //送入regfile模块
     wire[`RegAddrBus] id_reg1_addr_o;
     wire              id_reg2_read_o;
     wire[`RegAddrBus] id_reg2_addr_o;
     wire[`InstBus]    id_inst_o;
+    wire              id_ex_is_in_delayslot_o;
     id id_0(
         .rst(rst), .pc_i(id_pc_i), .inst_i(id_inst_i),
         // regfile模块的输出
         .reg1_data_i(id_reg1_data_i), .reg2_data_i(id_reg2_data_i),
+        .is_in_delayslot_i(id_ex_is_in_delayslot_o),
 
         // 输出-送入流水寄存器
         .alusel_o(id_alusel_o), 
@@ -89,6 +97,9 @@ module openmips (
         .reg2_data_o(id_reg2_data_o),
         .waddr_o(id_waddr_o),
         .wreg_o(id_wreg_o),
+        .is_in_delayslot_o(id_is_in_delayslot_o),
+        .link_addr_o(id_link_addr_o),
+        .next_inst_in_delayslot_o(id_next_inst_in_delayslot_o),
         // 送入regfile模块（读相关）
         .reg1_read_o(id_reg1_read_o),
         .reg1_addr_o(id_reg1_addr_o),
@@ -97,7 +108,10 @@ module openmips (
         //送入stall_ctrl模块
         .stallreq(stallreq_from_id),
         //调试目的
-        .inst_o(id_inst_o)
+        .inst_o(id_inst_o),
+        //反馈pc
+        .branch_flag_o(branch_flag_o),
+        .branch_target_o(branch_target_address_o)
     );
 
     // refile
@@ -127,17 +141,23 @@ module openmips (
     wire[`RegAddrBus] ex_waddr_i;
     wire              ex_wreg_i;
     wire[`InstBus]    ex_inst_i;
+    wire              ex_is_indelayslot; 
+    wire[`InstAddrBus]ex_link_address;
     id_ex id_ex_0(
         .rst(rst), .clk(clk), .id_inst(id_inst_o),
         .stall(stall),
         .id_alusel(id_alusel_o), .id_aluop(id_aluop_o), 
         .id_reg1_data(id_reg1_data_o), .id_reg2_data(id_reg2_data_o),
         .id_waddr(id_waddr_o), .id_reg_we(id_wreg_o),
-        //输出
+        .id_is_in_delayslot(id_is_in_delayslot_o), .id_link_address(id_link_addr_o),
+        .id_next_inst_in_delayslot(id_next_inst_in_delayslot_o),
+        
         .ex_alusel(ex_alusel_i), .ex_aluop(ex_aluop_i), 
         .ex_reg1_data(ex_reg1_data_i), .ex_reg2_data(ex_reg2_data_i),
         .ex_waddr(ex_waddr_i), .ex_reg_we(ex_wreg_i),
-        .ex_inst(ex_inst_i)
+        .ex_inst(ex_inst_i),
+        .ex_is_indelayslot(ex_is_indelayslot), .ex_link_address(ex_link_address),
+        .is_in_delayslot(id_ex_is_in_delayslot_o)
     );
 
 
