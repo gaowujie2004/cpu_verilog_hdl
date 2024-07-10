@@ -141,8 +141,8 @@ module openmips (
     wire[`RegAddrBus] ex_waddr_i;
     wire              ex_wreg_i;
     wire[`InstBus]    ex_inst_i;
-    wire              ex_is_indelayslot; 
-    wire[`InstAddrBus]ex_link_address;
+    wire              ex_is_indelayslot_i; 
+    wire[`InstAddrBus]ex_link_addr_i;
     id_ex id_ex_0(
         .rst(rst), .clk(clk), .id_inst(id_inst_o),
         .stall(stall),
@@ -156,7 +156,7 @@ module openmips (
         .ex_reg1_data(ex_reg1_data_i), .ex_reg2_data(ex_reg2_data_i),
         .ex_waddr(ex_waddr_i), .ex_reg_we(ex_wreg_i),
         .ex_inst(ex_inst_i),
-        .ex_is_indelayslot(ex_is_indelayslot), .ex_link_address(ex_link_address),
+        .ex_is_indelayslot(ex_is_indelayslot_i), .ex_link_address(ex_link_addr_i),
         .is_in_delayslot(id_ex_is_in_delayslot_o)
     );
 
@@ -192,6 +192,8 @@ module openmips (
         .hi_i(ex_hi_i), .lo_i(ex_lo_i),
         .cnt_i(ex_cnt_i), .hilo_temp_i(ex_hilo_temp_i),
         .div_result_i(div_result_o), .div_ready_i(div_ready_o),
+        .link_address_i(ex_link_addr_i),
+        .is_in_delayslot_i(ex_is_indelayslot_i),
 
         /*写regfile相关信号*/
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o),

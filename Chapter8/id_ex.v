@@ -18,7 +18,7 @@ module id_ex (
     input wire              id_reg_we,      //目标寄存器写使能
     input wire              id_is_in_delayslot, //ID阶段的指令是否是延迟槽指令
     input wire[`InstAddrBus] id_link_address,    //返回地址，写入目的寄存器
-    input wire              id_next_inst_in_delayslot,
+    input wire              id_next_inst_in_delayslot, //IF阶段的指令是否是延迟槽指令
 
     output reg[`AluSelBus]  ex_alusel,
     output reg[`AluOpBus]   ex_aluop,
@@ -29,7 +29,7 @@ module id_ex (
     output reg[`InstBus]    ex_inst,        //调试目的
     output reg              ex_is_indelayslot, //ID阶段的指令是否是延迟槽指令
     output reg[`InstAddrBus]ex_link_address,   //返回地址，写入目的寄存器
-    output reg              is_in_delayslot
+    output reg              is_in_delayslot    //id_next_inst_in_delayslot作为输出
 );
 
     always @(posedge clk) begin
@@ -39,28 +39,40 @@ module id_ex (
             ex_aluop <= `ALU_NOP_OP;
 			ex_reg1_data <= `ZeroWord;
 			ex_reg2_data <= `ZeroWord;
-			ex_waddr <= `NOPRegAddr;
+			ex_waddr  <= `NOPRegAddr;
 			ex_reg_we <= `WriteDisable;
-            ex_inst  <= `ZeroWord;
+            ex_inst   <= `ZeroWord;
+            ex_is_indelayslot  <= `False_v;
+            ex_link_address    <= `ZeroWord;
+            is_in_delayslot    <= `False_v;
         end else begin
             if (stall[2]==`Stop && stall[3]==`NotStop) begin
+                //气泡
                 ex_alusel <= `ALU_RES_NOP;
                 ex_aluop  <= `ALU_NOP_OP;
                 ex_reg1_data <= `ZeroWord;
                 ex_reg2_data <= `ZeroWord;
                 ex_waddr  <= `NOPRegAddr;
                 ex_reg_we <= `WriteDisable;
-                ex_inst   <= id_inst;                
+                ex_inst   <= id_inst;
+                ex_is_indelayslot  <= `False_v;
+                ex_link_address    <= `ZeroWord;    
+                // Why: 为什么呢？is_in_delayslot  not change
             end else if(stall[2] == `NotStop) begin
+                //无暂停
                 ex_alusel <= id_alusel;
-                ex_aluop <= id_aluop;
+                ex_aluop  <= id_aluop;
                 ex_reg1_data <= id_reg1_data;
                 ex_reg2_data <= id_reg2_data;
-                ex_waddr <= id_waddr;
+                ex_waddr  <= id_waddr;
                 ex_reg_we <= id_reg_we;	
-                ex_inst  <= id_inst;                
+                ex_inst   <= id_inst;    
+                ex_is_indelayslot  <= id_is_in_delayslot;
+                ex_link_address    <= id_link_address;   
+                is_in_delayslot    <= id_next_inst_in_delayslot;
             end else begin
                 // not change
+                // 暂停
             end
         end
     end

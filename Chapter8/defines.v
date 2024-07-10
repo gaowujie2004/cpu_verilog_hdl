@@ -87,6 +87,21 @@
 `define FUNC_DIV   6'b011010
 `define FUNC_DIVU  6'b011011
 
+`define OP_J       6'b000010
+`define OP_JAL     6'b000011
+`define FUNC_JR    6'b001000
+`define FUNC_JALR  6'b001001
+
+`define OP_BEQ     6'b000100
+`define OP_BGTZ    6'b000111
+`define OP_BLEZ    6'b000110
+`define OP_BNE     6'b000101
+
+`define RT_BGEZ    5'b00001
+`define RT_BGEZAL  5'b10001
+`define RT_BLTZ    5'b00000
+`define RT_BLTZAL  5'b10000
+
 `define OP_SPECIAL_INST  6'b000000
 `define OP_SPECIAL2_INST 6'b011100
 `define OP_REGIMM_INST   6'b000001
@@ -130,13 +145,28 @@
 `define ALU_DIV_OP   8'b00011010
 `define ALU_DIVU_OP  8'b00011011
 
-`define ALU_NOP_OP   8'b00000000
+`define ALU_J_OP        8'b01001111
+`define ALU_JAL_OP      8'b01010000
+`define ALU_JR_OP       8'b00001000
+`define ALU_JALR_OP     8'b00001001
+`define ALU_BEQ_OP      8'b01010001
+`define ALU_BGEZ_OP     8'b01000001
+`define ALU_BGEZAL_OP   8'b01001011
+`define ALU_BGTZ_OP     8'b01010100
+`define ALU_BLEZ_OP     8'b01010011
+`define ALU_BLTZ_OP     8'b01000000
+`define ALU_BLTZAL_OP   8'b01001010
+`define ALU_BNE_OP      8'b01010010
+
+`define ALU_NOP_OP      8'b00000000
 // AluSel
 `define ALU_RES_LOGIC 3'b001         //逻辑运算
 `define ALU_RES_SHIFT 3'b010         //位移运算
 `define ALU_RES_MOVE  3'b011	     //移动运算
 `define ALU_RES_ARITHMETIC 3'b100	 //算术运算
 `define ALU_RES_MUL   3'b101         //乘法（Hi、Lo保存结果）
+`define ALU_RES_JUMP_BRANCH 3'b110   //转移类指令
+
 
 `define ALU_RES_NOP   3'b000         
 

@@ -22,7 +22,13 @@ module pc_reg (
     always @(posedge clk) begin 
         if (ce == `ChipEnable) begin
             if (stall[0] == `NotStop) begin
-                pc <= pc + 4'h4;
+                if (branch_flag_i == `Branch) begin
+                    pc <= branch_target_address_i;
+                end else begin
+                    pc <= pc + 4'h4;
+                end
+            end else begin
+                // stall. pc not change
             end
         end else begin 
             pc <= `ZeroWord;

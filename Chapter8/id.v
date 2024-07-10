@@ -9,7 +9,7 @@ module id (
     input wire[`RegBus] reg1_data_i,        // 从regfile读的数据
     input wire[`RegBus] reg2_data_i,        // 从regfile读的数据
 
-    input wire          is_in_delayslot_i,  // ID/EX输入
+    input wire          is_in_delayslot_i,  // ID/EX输入，当前处于IF阶段的指令是否为延迟槽指令
     
     // 流水寄存器保存
     output reg[`AluSelBus] alusel_o,        // 运算类型？            
@@ -19,10 +19,10 @@ module id (
     output reg[`RegAddrBus]    waddr_o,     // 目标寄存器地址
     output reg                 wreg_o,      // 写使能
 
-    output reg         is_in_delayslot_o,   // 本阶段生成
+    output reg         is_in_delayslot_o,    // 本阶段生成，当前处于ID阶段的指令是否为延迟槽指令
     output reg[`InstAddrBus] link_addr_o,    // 本阶段生成，跳转指令的返回地址(跳转指令的下一条指令)
-    output reg next_inst_in_delayslot_o,     // 本阶段生成
-    output reg[`InstAddrBus] branch_target_o,// 本阶段生成->pc.v，跳转指令目的地址
+    output reg next_inst_in_delayslot_o,     // 本阶段生成，下一条进入IF阶段的指令是否为延迟槽指令
+    output reg[`InstAddrBus] branch_target_o,// 本阶段生成->pc.v，转移到的目的地址
     output reg branch_flag_o,                // 本阶段生成->pc.v，是否跳转
     
     
@@ -47,11 +47,18 @@ module id (
     wire[15:0]     imm16 = inst_i[15:0];   
     reg[`RegBus] imm32;             // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
     reg instvalid;                  // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
+    wire[`InstAddrBus] pc_plus_8   = pc_i + 8;      //延迟槽指令的下一个
+    wire[`InstAddrBus] pc_plus_4   = pc_i + 4;      //延迟槽指令
+    wire[`InstAddrBus] jump_addr   = {pc_plus_4[31:28], inst_i[25:0], 2'b00};  //{PC+4[31:28],index26,2'b00}
+    wire[`InstAddrBus] branch_addr = pc_plus_4 + {{14{imm16[15]}}, imm16[15:0], 2'b00};
+
+
 
     /*
      * 信号传递
     */
     assign inst_o = inst_i;
+    
 
     /*
      * 第一段：指令译码，各种控制信号
@@ -69,7 +76,13 @@ module id (
 			reg2_addr_o <= `NOPRegAddr;
             reg1_data_o <= `ZeroWord;
             reg2_data_o <= `ZeroWord;
-			imm32 <= 32'b0;	
+			imm32 <= 32'b0;	     
+
+            is_in_delayslot_o         <= `False_v;
+            next_inst_in_delayslot_o  <= `False_v;
+            link_addr_o               <= `ZeroWord;
+            branch_target_o           <= `ZeroWord;
+            branch_flag_o             <= `False_v;
         end else begin
             // TODO:很重要，case 分支如果未命中，默认逻辑
             wreg_o      <= `WriteDisable;
@@ -77,6 +90,12 @@ module id (
             reg2_read_o <= `ReadDisable; 
             aluop_o     <= `ALU_NOP_OP;
             alusel_o    <= `ALU_RES_NOP;
+            
+            is_in_delayslot_o         <= is_in_delayslot_i;
+            next_inst_in_delayslot_o  <= `False_v;
+            link_addr_o               <= `ZeroWord;
+            branch_target_o           <= `ZeroWord;
+            branch_flag_o             <= `False_v;
 
             case (op)
                 `OP_SPECIAL_INST: begin             // R型指令
@@ -402,6 +421,41 @@ module id (
                                 reg2_addr_o <= rt;     
                             end                   
 
+                            `FUNC_JR: begin             //jr rs。PC <- R[rs]
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_JUMP_BRANCH; 
+                                aluop_o   <= `ALU_JR_OP;
+                                //write reg
+                                wreg_o    <= `WriteDisable;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadDisable;
+                                //branch
+                                next_inst_in_delayslot_o  <= `True_v;    
+                                branch_flag_o             <= `True_v;
+                                branch_target_o           <= reg1_data_i;
+                            end
+                            `FUNC_JALR: begin           //jalr rs 或 jalr rd, rs。    R[rd]<-PC+8; PC<-R[rs]
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_JUMP_BRANCH; 
+                                aluop_o   <= `ALU_JALR_OP;
+                                //write reg
+                                wreg_o    <= `WriteEnable;
+                                waddr_o   <= rd;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadDisable;
+                                //branch 应该是跳转成功？
+                                next_inst_in_delayslot_o  <= `True_v;
+                                link_addr_o               <= pc_plus_8;                                
+                                branch_target_o           <= reg1_data_i;
+                                branch_flag_o             <= `True_v;                           
+                            end
+
                             default: begin
                                 instvalid <= `False_v;
                             end
@@ -558,6 +612,87 @@ module id (
                         endcase
                     end
                 end
+                `OP_REGIMM_INST: begin
+                    if (rt == `RT_BLTZ) begin       //R[rs]<0 then branch
+                        instvalid <= `True_v;
+                        alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                        aluop_o   <= `ALU_BLTZ_OP;
+                        //write
+                        wreg_o    <= `WriteDisable;
+                        //read1 reg
+                        reg1_read_o <= `ReadEnable;
+                        reg1_addr_o <= rs;
+                        //read2 reg
+                        reg2_read_o <= `ReadDisable;   
+                        //branch
+                        if (reg1_data_i[31]) begin
+                            next_inst_in_delayslot_o <= `True_v;
+                            branch_flag_o            <= `True_v;    //reg_data_i有符号数，如果小于0，那么符号位为1        
+                            branch_target_o          <= branch_addr;
+                        end
+                         
+                    end else if(rt == `RT_BLTZAL) begin     //R[rs]<0 then branch  。 总会R[$31]<-PC+8
+                        instvalid <= `True_v;
+                        alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                        aluop_o   <= `ALU_BLTZAL_OP;
+                        //write
+                        wreg_o    <= `WriteEnable;
+                        waddr_o   <= `RegNumLog2'h1f;
+                        //read1 reg
+                        reg1_read_o <= `ReadEnable;
+                        reg1_addr_o <= rs;
+                        //read2 reg
+                        reg2_read_o <= `ReadDisable;   
+                        //branch
+                        link_addr_o              <= pc_plus_8;
+                        if (reg1_data_i[31]) begin
+                            next_inst_in_delayslot_o <= `True_v;
+                            branch_flag_o            <= `True_v;    //reg_data_i有符号数，如果小于0，那么符号位为1        
+                            branch_target_o          <= branch_addr;
+                        end
+                    end else if (rt == `RT_BGEZ) begin
+                        /*
+                         * if (R[rs] >= 0) then branch
+                        */
+                        instvalid <= `True_v;
+                        alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                        aluop_o   <= `ALU_BGEZ_OP;
+                        //write
+                        wreg_o    <= `WriteDisable;
+                        //read1 reg
+                        reg1_read_o <= `ReadEnable;
+                        reg1_addr_o <= rs;
+                        //read2 reg
+                        reg2_read_o <= `ReadDisable;   
+                        //TODO: branch
+                        if (~reg1_data_i[31]) begin     //reg_data_i有符号数，那么符号位为0，那就是 >=0
+                            next_inst_in_delayslot_o <= `True_v;
+                            branch_flag_o            <= `True_v;                     
+                            branch_target_o          <= branch_addr;
+                        end
+                    end else if (rt == `RT_BGEZAL) begin
+                        /* if (R[rs] >= 0) then branch  . 总会R[$31]<-PC+8    */
+                        instvalid <= `True_v;
+                        alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                        aluop_o   <= `RT_BGEZAL;
+                        //write
+                        wreg_o    <= `WriteEnable;
+                        waddr_o   <= `RegNumLog2'h1f;
+                        //read1 reg
+                        reg1_read_o <= `ReadEnable;
+                        reg1_addr_o <= rs;
+                        //read2 reg
+                        reg2_read_o <= `ReadDisable;   
+                        //branch
+                        link_addr_o                  <= pc_plus_8;      //延迟槽指令被执行了，故pc+8
+                        if (~reg1_data_i[31]) begin     //reg_data_i有符号数，那么符号位为0，那就是 >=0
+                            next_inst_in_delayslot_o <= `True_v;
+                            branch_flag_o            <= `True_v;                     
+                            branch_target_o          <= branch_addr;
+                        end                       
+                    end
+                end
+
                 /*
                  * I型指令：ori $rs, $rt, imm。  
                  * R[$rt] <- R[$rs] op u32(imm)
@@ -686,6 +821,127 @@ module id (
 
                     reg1_read_o <= `ReadDisable;
                     reg2_read_o <= `ReadDisable;
+                end
+                
+                /*
+                 * Desc: J instr_index
+                 * RTL:  PC <- {PC+4[31:28],instr_index26,2'b00}
+                */
+                `OP_J: begin    
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                    aluop_o   <= `ALU_J_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //read1 reg
+                    reg1_read_o <= `ReadDisable;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;
+                    //branch 
+                    next_inst_in_delayslot_o  <= `True_v;
+                    branch_flag_o             <= `True_v;
+                    branch_target_o           <= jump_addr;
+                end
+                /*
+                 * Desc: jal instr_index
+                 * RTL:  R[$31]<-PC+4； PC<-{PC+4[31:28],instr_index26,2'b00}
+                */
+                `OP_JAL: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                    aluop_o   <= `ALU_JAL_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= `RegNumLog2'h1f;
+                    //read1 reg
+                    reg1_read_o <= `ReadDisable;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;     
+                    //branch
+                    next_inst_in_delayslot_o <= `True_v;
+                    link_addr_o              <= pc_plus_8;         //Think:又冗余一个ALU add， Why: 延迟槽所以+8？无论如何都会先把延迟槽指令执行完，所以返回地址不能是延迟槽指令了
+                    branch_target_o          <= jump_addr;
+                    branch_flag_o            <= `True_v;
+                end
+                
+                /*
+                 * 条件转移指令
+                 * 我们在ID阶段进行比较，没有在EX阶段复用硬件资源，但好处是减少时钟周期浪费
+                */
+                `OP_BEQ: begin                        //beq rs,rt,offset。 R[rs]==R[rt] then branch
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                    aluop_o   <= `ALU_BEQ_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadEnable;   
+                    reg2_addr_o <= rt;
+                    //branch
+                    if (reg1_data_i == reg2_data_i) begin
+                        next_inst_in_delayslot_o <= `True_v;
+                        branch_target_o          <= branch_addr;
+                        branch_flag_o            <= `True_v;
+                        // TODO: 这样一来，延迟槽指令怎么执行？暂停一个CLK吗？
+                    end
+                end
+                `OP_BNE: begin                       //bne rs,rt,offset。   R[rs]!=R[rt] then branch
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                    aluop_o   <= `ALU_BNE_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadEnable;   
+                    reg2_addr_o <= rt;
+                    //branch
+                    if (reg1_data_i != reg2_data_i) begin
+                        next_inst_in_delayslot_o <= `True_v;
+                        branch_target_o          <= branch_addr;
+                        branch_flag_o            <= `True_v;
+                    end                                    
+                end
+                `OP_BGTZ: begin                        //bgtz rs,offset。  R[rs]>0 then branch
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                    aluop_o   <= `ALU_BGTZ_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;   
+                    //branch
+                    if ($signed(reg1_data_i) > 0) begin
+                        next_inst_in_delayslot_o <= `True_v;
+                        branch_target_o          <= branch_addr;
+                        branch_flag_o            <= `True_v;                             
+                    end
+                end
+                `OP_BLEZ: begin                       //blez rs,offset。    R[rs]<=0 then branch
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_JUMP_BRANCH;
+                    aluop_o   <= `ALU_BLEZ_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;   
+                    //branch
+                    if (reg1_data_i[31] || (reg1_data_i == `ZeroWord)) begin
+                        next_inst_in_delayslot_o <= `True_v;
+                        branch_target_o          <= branch_addr;
+                        branch_flag_o            <= `True_v;                           
+                    end
                 end
 
                 default: begin

@@ -19,7 +19,7 @@ module ex (
     input wire[`DoubleRegBus] div_result_i, //div指令结果
     input wire                div_ready_i,  //div模块是否可读
 
-    input wire                is_in_delayslot_i,    //延迟槽指令
+    input wire                is_in_delayslot_i,    //EX阶段的指令是否为延迟槽指令
     input wire                link_address_i,       //保存的返回地址
 
     //输出到流水寄存器
@@ -109,7 +109,6 @@ module ex (
     end
 
 
-
     /*
      * 计算：简单算术运算结果
     */
@@ -180,6 +179,7 @@ module ex (
         end
     end
 
+
     /*
      * Write Regfile选择结果：根据alusel_i选择运算结果输出
     */
@@ -207,6 +207,10 @@ module ex (
 
             `ALU_RES_ARITHMETIC: begin
                 alu_res_o <= arithmetic_res;
+            end
+
+            `ALU_RES_JUMP_BRANCH: begin
+                alu_res_o <= link_address_i;
             end
 
             `ALU_RES_NOP: begin
