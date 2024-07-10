@@ -674,7 +674,7 @@ module id (
                         /* if (R[rs] >= 0) then branch  . 总会R[$31]<-PC+8    */
                         instvalid <= `True_v;
                         alusel_o  <= `ALU_RES_JUMP_BRANCH;
-                        aluop_o   <= `RT_BGEZAL;
+                        aluop_o   <= `ALU_BGEZAL_OP;
                         //write
                         wreg_o    <= `WriteEnable;
                         waddr_o   <= `RegNumLog2'h1f;
