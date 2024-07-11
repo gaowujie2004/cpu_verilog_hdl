@@ -38,7 +38,22 @@
 `define OP_ADDI   6'b001000
 `define OP_ADDIU  6'b001001
 `define OP_SLTI   6'b001010
-`define OP_SLTIU  6'b001011   
+`define OP_SLTIU  6'b001011 
+
+`define OP_LB     6'b100000
+`define OP_LBU    6'b100100
+`define OP_LH     6'b100001
+`define OP_LHU    6'b100101
+`define OP_LL     6'b110000
+`define OP_LW     6'b100011
+`define OP_LWL    6'b100010
+`define OP_LWR    6'b100110
+`define OP_SB     6'b101000
+`define OP_SC     6'b111000
+`define OP_SH     6'b101001
+`define OP_SW     6'b101011
+`define OP_SWL    6'b101010
+`define OP_SWR    6'b101110
 
 `define OP_PREF   6'b110011
 
@@ -158,6 +173,22 @@
 `define ALU_BLTZAL_OP   8'b01001010
 `define ALU_BNE_OP      8'b01010010
 
+`define ALU_LB_OP       8'b11100000
+`define ALU_LBU_OP      8'b11100100
+`define ALU_LH_OP       8'b11100001
+`define ALU_LHU_OP      8'b11100101
+`define ALU_LL_OP       8'b11110000
+`define ALU_LW_OP       8'b11100011
+`define ALU_LWL_OP      8'b11100010
+`define ALU_LWR_OP      8'b11100110
+`define ALU_PREF_OP     8'b11110011
+`define ALU_SB_OP       8'b11101000
+`define ALU_SC_OP       8'b11111000
+`define ALU_SH_OP       8'b11101001
+`define ALU_SW_OP       8'b11101011
+`define ALU_SWL_OP      8'b11101010
+`define ALU_SWR_OP      8'b11101110
+
 `define ALU_NOP_OP      8'b00000000
 // AluSel
 `define ALU_RES_LOGIC 3'b001         //逻辑运算
@@ -166,7 +197,7 @@
 `define ALU_RES_ARITHMETIC 3'b100	 //算术运算
 `define ALU_RES_MUL   3'b101         //乘法（Hi、Lo保存结果）
 `define ALU_RES_JUMP_BRANCH 3'b110   //转移类指令
-
+`define EXE_RES_LOAD_STORE  3'b111	 //加载存储指令
 
 `define ALU_RES_NOP   3'b000         
 
