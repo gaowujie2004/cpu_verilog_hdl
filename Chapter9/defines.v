@@ -197,7 +197,7 @@
 `define ALU_RES_ARITHMETIC 3'b100	 //算术运算
 `define ALU_RES_MUL   3'b101         //乘法（Hi、Lo保存结果）
 `define ALU_RES_JUMP_BRANCH 3'b110   //转移类指令
-`define EXE_RES_LOAD_STORE  3'b111	 //加载存储指令
+`define ALU_RES_LOAD_STORE  3'b111	 //加载存储指令
 
 `define ALU_RES_NOP   3'b000         
 
