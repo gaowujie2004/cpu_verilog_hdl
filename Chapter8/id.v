@@ -220,7 +220,6 @@ module id (
                                 aluop_o  <= `ALU_MOVN_OP;
                                 //写控制
                                 waddr_o  <= rd;
-                                //Think: 感觉使用reg2_data_o不合理，故而使用reg2_data_i（regfile已经做转发处理了）
                                 wreg_o   <= reg2_data_i != `ZeroWord ? `WriteEnable : `WriteDisable;    
                                 //读1
                                 reg1_read_o <= `ReadEnable;
@@ -235,7 +234,6 @@ module id (
                                 aluop_o  <= `ALU_MOVZ_OP;
                                 //写控制
                                 waddr_o  <= rd;
-                                //Think: 感觉使用reg2_data_o不合理，故而使用reg2_data_i（regfile已经做转发处理了）
                                 wreg_o   <= reg2_data_i == `ZeroWord ? `WriteEnable : `WriteDisable; 
                                 //读1
                                 reg1_read_o <= `ReadEnable;
