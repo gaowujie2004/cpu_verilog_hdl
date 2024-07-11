@@ -42,7 +42,14 @@ module ex (
     output wire            div_signed_o,   //是否有符号div
     output wire[`RegBus]   div_op1_o,      //被除数
     output wire[`RegBus]   div_op2_o,      //除数
-    output reg             div_start_o     //div开始工作
+    output reg             div_start_o,    //div开始工作
+
+    /*
+     * 对应load/store指令来说，该阶段就是计算有效地址的
+    */
+    output wire[`AluOpBus]   aluop_o,
+    output reg[`InstAddrBus] mem_addr_o,   //内存操作地址，是alu运算结果
+    output reg[`RegBus]      reg2_data_o   //作为存储指令的写入数据。sb rt, offset(rs)
 );
     reg [`RegBus] logic_res;            //保存逻辑运算结果
     reg [`RegBus] shift_res;            //保存位移运算结果
@@ -51,6 +58,7 @@ module ex (
     wire[4:0]     shift_count = reg2_data_i[4:0];
 
     assign inst_o = inst_i;
+    assign aluop_o = aluop_i;
 
     /* 计算：逻辑、位移、移动运算结果 */
     always @(*) begin

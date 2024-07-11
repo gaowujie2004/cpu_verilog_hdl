@@ -13,6 +13,11 @@ module mem (
     input wire[`RegBus]    hi_i,          //指令执行阶段对Hi写入的数据
     input wire[`RegBus]    lo_i,          //指令执行阶段对Lo写入的数据
 
+    input wire[`AluOpBus]   aluop_i,
+    input wire[`InstAddrBus]mem_addr_i,
+    input wire[`RegBus]     reg2_data_i,
+    input wire[`RegBus]     mem_data_i,
+
 
     //输入流水寄存器
     output reg[`RegAddrBus] waddr_o,       
@@ -23,6 +28,11 @@ module mem (
     output reg             lo_we_o,       
     output reg[`RegBus]    hi_o,          
     output reg[`RegBus]    lo_o,
+
+    output wire[`InstAddrBus]mem_addr_o,
+    output reg              mem_we_o,
+    output reg              mem_sel_o,   //字节选择
+    output reg              mem_ce_o,    //存储器使能控制
 
     output reg[`InstBus]  inst_o         //debuger
 );
