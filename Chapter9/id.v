@@ -33,7 +33,9 @@ module id (
     output reg[`RegAddrBus]  reg2_addr_o,   // 读reg2寄存器地址
     // Why: 为什么是reg类型？因为在 always 中赋值，就必须是reg类型，当然综合后可能是连线或寄存器。
 
-    output    stallreq, 
+    output wire stallreq, 
+
+    output wire reg2_data_o,                // reg2，R[rt]的值，store类指令需要
     
     //调试目的
     output wire[`InstBus] inst_o
@@ -58,6 +60,7 @@ module id (
      * 信号传递
     */
     assign inst_o = inst_i;
+    assign reg2_data_o = reg2_data_i;
     
 
     /*

@@ -71,6 +71,7 @@ module openmips (
     wire         id_is_in_delayslot_o; 
     wire[`InstAddrBus] id_link_addr_o;   
     wire  id_next_inst_in_delayslot_o;    
+    wire[`RegBus]      id_reg2_data_o;
 
 
     wire[`RegAddrBus]  ex_waddr_o;     // EX阶段，数据转发
@@ -107,6 +108,7 @@ module openmips (
         .is_in_delayslot_o(id_is_in_delayslot_o),
         .link_addr_o(id_link_addr_o),
         .next_inst_in_delayslot_o(id_next_inst_in_delayslot_o),
+        .reg2_data_o(id_reg2_data_o),
         // 送入regfile模块（读相关）
         .reg1_read_o(id_reg1_read_o),
         .reg1_addr_o(id_reg1_addr_o),
@@ -150,6 +152,8 @@ module openmips (
     wire[`InstBus]    ex_inst_i;
     wire              ex_is_indelayslot_i; 
     wire[`InstAddrBus]ex_link_addr_i;
+    wire[`RegBus]     ex_reg2_data_i;
+
     id_ex id_ex_0(
         .rst(rst), .clk(clk), .id_inst(id_inst_o),
         .stall(stall),
@@ -158,13 +162,15 @@ module openmips (
         .id_waddr(id_waddr_o), .id_reg_we(id_wreg_o),
         .id_is_in_delayslot(id_is_in_delayslot_o), .id_link_address(id_link_addr_o),
         .id_next_inst_in_delayslot(id_next_inst_in_delayslot_o),
+        .id_reg2_data(id_reg2_data_o),
         
         .ex_alusel(ex_alusel_i), .ex_aluop(ex_aluop_i), 
         .ex_op1_data(ex_op1_data_i), .ex_op2_data(ex_op2_data_i),
         .ex_waddr(ex_waddr_i), .ex_reg_we(ex_wreg_i),
         .ex_inst(ex_inst_i),
         .ex_is_indelayslot(ex_is_indelayslot_i), .ex_link_address(ex_link_addr_i),
-        .is_in_delayslot(id_ex_is_in_delayslot_o)
+        .is_in_delayslot(id_ex_is_in_delayslot_o),
+        .ex_reg2_data(ex_reg2_data_i)
     );
 
 
@@ -205,6 +211,7 @@ module openmips (
         .div_result_i(div_result_o), .div_ready_i(div_ready_o),
         .link_address_i(ex_link_addr_i),
         .is_in_delayslot_i(ex_is_indelayslot_i),
+        .reg2_data_i(ex_reg2_data_i),
 
         /*写regfile相关信号*/
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o),

@@ -22,6 +22,8 @@ module ex (
     input wire                is_in_delayslot_i,    //EX阶段的指令是否为延迟槽指令
     input wire[`InstAddrBus]  link_address_i,       //保存的返回地址
 
+    input wire[`RegBus]       reg2_data_i,               //reg2，R[rt]的值，用于store指令
+
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能
