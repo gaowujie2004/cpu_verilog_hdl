@@ -20,9 +20,9 @@ module mem (
 
 
     //输入流水寄存器
-    output reg[`RegAddrBus] waddr_o,       
-    output reg              reg_we_o,      
-    output reg[`RegBus]     mem_data_o,
+    output reg[`RegAddrBus] waddr_o,     //目的寄存器地址
+    output reg              reg_we_o,    //目的寄存器写使能
+    output reg[`RegBus]     wdata_o,     //目的寄存器写入数据
 
     output reg             hi_we_o,       
     output reg             lo_we_o,       
@@ -32,6 +32,7 @@ module mem (
     output wire[`InstAddrBus]mem_addr_o,
     output reg              mem_we_o,
     output reg              mem_sel_o,   //字节选择
+    output reg[`RegBus]     mem_data_o,  //向RAM输出的写入数据
     output reg              mem_ce_o,    //存储器使能控制
 
     output reg[`InstBus]  inst_o         //debuger
@@ -41,7 +42,7 @@ module mem (
         if (rst == `RstEnable) begin
             waddr_o <= `NOPRegAddr;
             reg_we_o <= `WriteDisable;
-            mem_data_o <= `ZeroWord;
+            wdata_o <= `ZeroWord;
 
             hi_we_o   <= `WriteDisable;
             lo_we_o   <= `WriteDisable;
@@ -52,7 +53,7 @@ module mem (
         end else begin
             waddr_o <= waddr_i;
             reg_we_o <= reg_we_i;
-            mem_data_o <= alu_res_i;
+            wdata_o <= alu_res_i;
 
             hi_we_o   <= hi_we_i;
             lo_we_o   <= lo_we_i;

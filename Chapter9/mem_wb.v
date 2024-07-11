@@ -9,7 +9,7 @@ module mem_wb (
 
     input wire[`RegAddrBus] mem_waddr,
     input wire              mem_reg_we,
-    input wire[`RegBus]     mem_data,
+    input wire[`RegBus]     mem_wdata,
 
     input wire             mem_hi_we,       //Hi寄存器写使能
     input wire             mem_lo_we,       //Lo寄存器写使能
@@ -20,7 +20,7 @@ module mem_wb (
 
     output reg[`RegAddrBus] wb_waddr,
     output reg              wb_reg_we,
-    output reg[`RegBus]     wb_data,        //写回阶段的指令要写入目的寄存器的值
+    output reg[`RegBus]     wb_wdata,       //写回阶段的指令要写入目的寄存器的值
 
     output reg              wb_hi_we,       
     output reg              wb_lo_we,       
@@ -34,7 +34,7 @@ module mem_wb (
         if (rst == `RstEnable) begin
             wb_waddr  <= `NOPRegAddr;
             wb_reg_we <= `WriteDisable;
-            wb_data   <= `ZeroWord;
+            wb_wdata  <= `ZeroWord;
 
             wb_hi_we   <= `WriteDisable;
             wb_lo_we   <= `WriteDisable;
@@ -52,7 +52,7 @@ module mem_wb (
                 */
                 wb_waddr   <= `NOPRegAddr;
                 wb_reg_we  <= `WriteDisable;
-                wb_data    <= `ZeroWord;
+                wb_wdata   <= `ZeroWord;
 
                 wb_hi_we   <= `WriteDisable;
                 wb_lo_we   <= `WriteDisable;
@@ -66,7 +66,7 @@ module mem_wb (
                 */   
                 wb_waddr  <= mem_waddr;
                 wb_reg_we <= mem_reg_we;
-                wb_data   <= mem_data; 
+                wb_wdata  <= mem_wdata; 
 
                 wb_hi_we   <= mem_hi_we;
                 wb_lo_we   <= mem_lo_we;
