@@ -1,7 +1,7 @@
 `include "defines.v"
 
 
-module dasta_ram (
+module data_ram (
     input wire[`InstAddrBus] addr_i,
     input wire[`RegBus]      data_i,
     input wire               we_i,
