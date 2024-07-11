@@ -14,18 +14,21 @@ module ex_mem (
     input wire[`RegAddrBus] ex_waddr,     //目标寄存器地址
     input wire              ex_reg_we,    //目标寄存器写使能
     input wire[`RegBus]     ex_alu_res,   //alu运算结果
-
+    
+    /*change hilo*/
     input wire             ex_hi_we,       //Hi寄存器写使能
     input wire             ex_lo_we,       //Lo寄存器写使能
     input wire[`RegBus]    ex_hi,          //指令执行阶段对Hi写入的数据
     input wire[`RegBus]    ex_lo,          //指令执行阶段对Lo写入的数据
 
+    /*madd、msub two clock cycle*/
     input wire[1:0]         ex_cnt,         //madd(u)、msub(u)使用，第几个周期
     input wire[`DoubleRegBus] ex_hilo_temp, //madd(u)、msub(u)使用，相乘的中间结果
 
+    /*load、store*/
     input wire[`AluOpBus]   ex_aluop,
     input wire[`InstAddrBus]ex_mem_addr,
-    input wire[`RegBus]     ex_reg2_data,
+    input wire[`RegBus]     ex_reg2_data,  //EX阶段的指令的reg2寄存器数据
 
     output reg[`RegAddrBus] mem_waddr,       
     output reg              mem_reg_we,      

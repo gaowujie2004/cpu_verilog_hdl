@@ -5,8 +5,8 @@ module ex (
     input wire[`InstBus]    inst_i,        //用于调试
     input wire[`AluSelBus]  alusel_i,
     input wire[`AluOpBus]   aluop_i,
-    input wire[`RegBus]     reg1_data_i,   //源操作数1
-    input wire[`RegBus]     reg2_data_i,   //源操作数2
+    input wire[`RegBus]     op1_data_i,   //源操作数1
+    input wire[`RegBus]     op2_data_i,   //源操作数2
     input wire[`RegAddrBus] waddr_i,       //目标寄存器地址
     input wire              reg_we_i,      //目标寄存器写使能
 
@@ -55,7 +55,7 @@ module ex (
     reg [`RegBus] shift_res;            //保存位移运算结果
     reg [`RegBus] move_res;             //移动操作运算结果
     reg [`RegBus] arithmetic_res;       //算术操作运算结果
-    wire[4:0]     shift_count = reg2_data_i[4:0];
+    wire[4:0]     shift_count = op2_data_i[4:0];
 
     assign inst_o = inst_i;
     assign aluop_o = aluop_i;
@@ -69,30 +69,30 @@ module ex (
         end else begin
             case (aluop_i)
                 `ALU_OR_OP: begin
-                    logic_res <= reg1_data_i | reg2_data_i;
+                    logic_res <= op1_data_i | op2_data_i;
                 end
                 `ALU_AND_OP: begin
-                    logic_res <= reg1_data_i & reg2_data_i;
+                    logic_res <= op1_data_i & op2_data_i;
                 end
                 `ALU_XOR_OP: begin
-                    logic_res <= reg1_data_i ^ reg2_data_i;
+                    logic_res <= op1_data_i ^ op2_data_i;
                 end
                 `ALU_NOR_OP: begin
-                    logic_res <= ~(reg1_data_i | reg2_data_i);
+                    logic_res <= ~(op1_data_i | op2_data_i);
                 end
 
                 `ALU_SLL_OP: begin
-                    shift_res <= reg1_data_i << shift_count;    
+                    shift_res <= op1_data_i << shift_count;    
                 end
                 `ALU_SRL_OP: begin
-                    shift_res <= reg1_data_i >> shift_count;    
+                    shift_res <= op1_data_i >> shift_count;    
                 end
                 `ALU_SRA_OP: begin
-                    shift_res <= $signed(reg1_data_i) >>> shift_count;
+                    shift_res <= $signed(op1_data_i) >>> shift_count;
                 end
 
                 `ALU_MOVN_OP, `ALU_MOVZ_OP: begin       // movz rd, rs, rt。 R[rd] <- R[rs]
-                    move_res <= reg1_data_i;
+                    move_res <= op1_data_i;
                 end
                 `ALU_MFHI_OP: begin                     // mfhi rd。 R[rd] <- Hi
                     move_res <= hi_i;
@@ -120,8 +120,8 @@ module ex (
     /*
      * 计算：简单算术运算结果
     */
-    wire xF=reg1_data_i[`RegWidth-1];
-    wire yF=reg2_data_i[`RegWidth-1];
+    wire xF=op1_data_i[`RegWidth-1];
+    wire yF=op2_data_i[`RegWidth-1];
     reg  sumF;
     reg  of = `False_v;                  //溢出判断
     reg signed[6:0] i;                   //0~31是正数
@@ -131,7 +131,7 @@ module ex (
         end else begin
             case (aluop_i)
                 `ALU_ADD_OP: begin
-                    arithmetic_res = reg1_data_i + reg2_data_i;
+                    arithmetic_res = op1_data_i + op2_data_i;
                     // TODO:溢出则不赋值，且产生中断
                     // +、+、-，溢出，0、0、1
                     // -、-、+，溢出，1、1、0
@@ -140,11 +140,11 @@ module ex (
                 end
 
                 `ALU_ADDU_OP: begin
-                    arithmetic_res  <= reg1_data_i + reg2_data_i;
+                    arithmetic_res  <= op1_data_i + op2_data_i;
                 end
 
                 `ALU_SUB_OP: begin
-                    arithmetic_res = reg1_data_i - reg2_data_i;
+                    arithmetic_res = op1_data_i - op2_data_i;
                     // TODO: 溢出则不赋值，且产生中断
                     // +、-，转为加，+ +，可能溢出。   +、-， - ，溢出。  0、1、1  ~xf & yf & sf
                     // -、+，转为加，- -， 可能溢出。  -、+、+，  溢出。  1  0 0  xf & ~yf & ~sf
@@ -155,31 +155,31 @@ module ex (
                 end
 
                 `ALU_SUBU_OP: begin
-                    arithmetic_res <= reg1_data_i - reg2_data_i;
+                    arithmetic_res <= op1_data_i - op2_data_i;
                 end
 
                 `ALU_MUL_OP: begin          //R[rd] <- R[rs] ×  R[rt]，有符号相乘低32位放入R[rd]
-                    arithmetic_res <= $signed(reg1_data_i) * $signed(reg2_data_i);
+                    arithmetic_res <= $signed(op1_data_i) * $signed(op2_data_i);
                 end
 
                 `ALU_SLT_OP: begin          //R[rt] <-  reg1<reg2 ? 1 : 0，有符号比较
-                    arithmetic_res <= $signed(reg1_data_i) < $signed(reg2_data_i);
+                    arithmetic_res <= $signed(op1_data_i) < $signed(op2_data_i);
                 end
 
                 `ALU_SLTU_OP: begin         //R[rt] <-  rs<SignExt(imm16) ? 1 : 0，无符号比较
-                    arithmetic_res <= reg1_data_i < reg2_data_i;
+                    arithmetic_res <= op1_data_i < op2_data_i;
                 end
 
                 `ALU_CLZ_OP: begin          //R[rd] <- coun_leading_zeros R[rs]，从高位到低位有多少个连续的0
                     arithmetic_res=0;
-                    for(i=6'd31; i>=0 && !reg1_data_i[i]; i=i-1) begin
+                    for(i=6'd31; i>=0 && !op1_data_i[i]; i=i-1) begin
                         arithmetic_res = arithmetic_res + 1;
                     end
                 end
 
                 `ALU_CLO_OP: begin          //R[rd] <- coun_leading_ones R[rs]，从高位到低位有多少个连续的1
                     arithmetic_res=0;
-                    for(i=6'd31; i>=0 && reg1_data_i[i]; i=i-1) begin
+                    for(i=6'd31; i>=0 && op1_data_i[i]; i=i-1) begin
                         arithmetic_res = arithmetic_res + 1;
                     end
                 end 
@@ -243,9 +243,9 @@ module ex (
             if (cnt_i==2'b00) begin
                 //第一个时钟周期
                 if (aluop_i==`ALU_MADD_OP || aluop_i==`ALU_MSUB_OP) begin
-                    hilo_temp_o <=  $signed(reg1_data_i)*$signed(reg2_data_i);
+                    hilo_temp_o <=  $signed(op1_data_i)*$signed(op2_data_i);
                 end else begin
-                    hilo_temp_o <=  reg1_data_i*reg2_data_i;
+                    hilo_temp_o <=  op1_data_i*op2_data_i;
                 end
 
                 madd_msub_hilo_we       <= `WriteDisable;
@@ -274,8 +274,8 @@ module ex (
     /*
      * 计算：div、divu
     */
-    assign div_op1_o = reg1_data_i;
-    assign div_op2_o = reg2_data_i;
+    assign div_op1_o = op1_data_i;
+    assign div_op2_o = op2_data_i;
     assign div_signed_o = aluop_i==`ALU_DIV_OP;
     reg stallreq_from_div;
     reg div_hilo_we;
@@ -319,13 +319,13 @@ module ex (
                 */
                 `ALU_MTHI_OP: begin             //mthi rs。hi <- R[rs]
                     hi_we_o <= `WriteEnable;
-                    hi_o    <= reg1_data_i;
+                    hi_o    <= op1_data_i;
                     lo_we_o <= `WriteDisable;
                     lo_o    <= `ZeroWord;
                 end
                 `ALU_MTLO_OP: begin
                     lo_we_o <= `WriteEnable;    //mtlo rs。lo <- R[rs]
-                    lo_o    <= reg1_data_i;
+                    lo_o    <= op1_data_i;
                     hi_we_o <= `WriteDisable;
                     hi_o    <= `ZeroWord;
                 end
@@ -336,12 +336,12 @@ module ex (
                  * RTL: {hi,lo} <- R[rs]*R[rt]
                 */
                 `ALU_MULT_OP: begin         //{hi, lo} <- rs × rt，有符号
-                    {hi_o, lo_o} <= $signed(reg1_data_i)  * $signed(reg2_data_i);
+                    {hi_o, lo_o} <= $signed(op1_data_i)  * $signed(op2_data_i);
                     hi_we_o <= `WriteEnable;
                     lo_we_o <= `WriteEnable;
                 end
                 `ALU_MULTU_OP: begin        //{hi, lo} <- rs × rt，无符号
-                    {hi_o, lo_o} <= (reg1_data_i)  * (reg2_data_i);
+                    {hi_o, lo_o} <= (op1_data_i)  * (op2_data_i);
                     hi_we_o <= `WriteEnable;
                     lo_we_o <= `WriteEnable;
                 end

@@ -6,16 +6,16 @@ module id (
     input wire[`InstAddrBus] pc_i,
     input wire[`InstBus]     inst_i,
 
-    input wire[`RegBus] reg1_data_i,        // 从regfile读的数据
-    input wire[`RegBus] reg2_data_i,        // 从regfile读的数据
+    input wire[`RegBus] reg1_data_i,        // 从regfile读的数据(最新的数据，已处理过数据相关问题)
+    input wire[`RegBus] reg2_data_i,        // 从regfile读的数据(最新的数据，已处理过数据相关问题)
 
     input wire          is_in_delayslot_i,  // ID/EX输入，当前处于IF阶段的指令是否为延迟槽指令
     
     // 流水寄存器保存
     output reg[`AluSelBus] alusel_o,        // 运算类型？            
     output reg[`AluOpBus]  aluop_o,         // 运算子类型
-    output reg[`RegBus]    reg1_data_o,     // 源操作数1(从regfile模块读取)
-    output reg[`RegBus]    reg2_data_o,     // 源操作数2(从regfile模块读取)
+    output reg[`RegBus]    op1_data_o,      // 源操作数1(refgile模块读取、或立即数)
+    output reg[`RegBus]    op2_data_o,      // 源操作数2(从regfile模块读取、或立即数)
     output reg[`RegAddrBus]    waddr_o,     // 目标寄存器地址
     output reg                 wreg_o,      // 写使能
 
@@ -74,8 +74,8 @@ module id (
 			reg2_read_o <= `ReadDisable;
 			reg1_addr_o <= `NOPRegAddr;
 			reg2_addr_o <= `NOPRegAddr;
-            reg1_data_o <= `ZeroWord;
-            reg2_data_o <= `ZeroWord;
+            op1_data_o <= `ZeroWord;
+            op2_data_o <= `ZeroWord;
 			imm32 <= 32'b0;	     
 
             is_in_delayslot_o         <= `False_v;
@@ -954,11 +954,11 @@ module id (
     */
     always @(*) begin
         if (rst == `RstEnable) begin
-            reg1_data_o <= `ZeroWord;
+            op1_data_o <= `ZeroWord;
         end else if (reg1_read_o == `ReadEnable) begin
-            reg1_data_o <= reg1_data_i;
+            op1_data_o <= reg1_data_i;
         end else begin
-            reg1_data_o <= `ZeroWord;
+            op1_data_o <= `ZeroWord;
         end
     end
 
@@ -967,13 +967,13 @@ module id (
     */
     always @(*) begin
         if (rst == `RstEnable) begin
-            reg2_data_o <= `ZeroWord;
+            op2_data_o <= `ZeroWord;
         end else if (reg2_read_o == `ReadEnable) begin
-            reg2_data_o <= reg2_data_i;
+            op2_data_o <= reg2_data_i;
         end else if (reg2_read_o == `ReadDisable) begin
-            reg2_data_o <= imm32;
+            op2_data_o <= imm32;
         end else begin
-            reg2_data_o <= `ZeroWord;
+            op2_data_o <= `ZeroWord;
         end
     end
 

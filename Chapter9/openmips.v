@@ -64,8 +64,8 @@ module openmips (
     // ID阶段      
     wire[`AluSelBus] id_alusel_o;  //送入流水寄存器
     wire[`AluOpBus] id_aluop_o;
-    wire[`RegBus] id_reg1_data_o;
-    wire[`RegBus] id_reg2_data_o;
+    wire[`RegBus] id_op1_data_o;
+    wire[`RegBus] id_op2_data_o;
     wire[`RegAddrBus] id_waddr_o;
     wire              id_wreg_o;
     wire         id_is_in_delayslot_o; 
@@ -100,8 +100,8 @@ module openmips (
         // 输出-送入流水寄存器
         .alusel_o(id_alusel_o), 
         .aluop_o(id_aluop_o),
-        .reg1_data_o(id_reg1_data_o),
-        .reg2_data_o(id_reg2_data_o),
+        .op1_data_o(id_op1_data_o),
+        .op2_data_o(id_op2_data_o),
         .waddr_o(id_waddr_o),
         .wreg_o(id_wreg_o),
         .is_in_delayslot_o(id_is_in_delayslot_o),
@@ -143,8 +143,8 @@ module openmips (
     // ID_EX寄存器
     wire[`AluSelBus]  ex_alusel_i; 
     wire[`AluOpBus]   ex_aluop_i;
-    wire[`RegBus]     ex_reg1_data_i;
-    wire[`RegBus]     ex_reg2_data_i;
+    wire[`RegBus]     ex_op1_data_i;
+    wire[`RegBus]     ex_op2_data_i;
     wire[`RegAddrBus] ex_waddr_i;
     wire              ex_wreg_i;
     wire[`InstBus]    ex_inst_i;
@@ -154,13 +154,13 @@ module openmips (
         .rst(rst), .clk(clk), .id_inst(id_inst_o),
         .stall(stall),
         .id_alusel(id_alusel_o), .id_aluop(id_aluop_o), 
-        .id_reg1_data(id_reg1_data_o), .id_reg2_data(id_reg2_data_o),
+        .id_op1_data(id_op1_data_o), .id_op2_data(id_op2_data_o),
         .id_waddr(id_waddr_o), .id_reg_we(id_wreg_o),
         .id_is_in_delayslot(id_is_in_delayslot_o), .id_link_address(id_link_addr_o),
         .id_next_inst_in_delayslot(id_next_inst_in_delayslot_o),
         
         .ex_alusel(ex_alusel_i), .ex_aluop(ex_aluop_i), 
-        .ex_reg1_data(ex_reg1_data_i), .ex_reg2_data(ex_reg2_data_i),
+        .ex_op1_data(ex_op1_data_i), .ex_op2_data(ex_op2_data_i),
         .ex_waddr(ex_waddr_i), .ex_reg_we(ex_wreg_i),
         .ex_inst(ex_inst_i),
         .ex_is_indelayslot(ex_is_indelayslot_i), .ex_link_address(ex_link_addr_i),
@@ -198,7 +198,7 @@ module openmips (
     ex ex_0(
         .rst(rst), .inst_i(ex_inst_i),
         .alusel_i(ex_alusel_i), .aluop_i(ex_aluop_i),
-        .reg1_data_i(ex_reg1_data_i), .reg2_data_i(ex_reg2_data_i),
+        .op1_data_i(ex_op1_data_i), .op2_data_i(ex_op2_data_i),
         .waddr_i(ex_waddr_i), .reg_we_i(ex_wreg_i),
         .hi_i(ex_hi_i), .lo_i(ex_lo_i),
         .cnt_i(ex_cnt_i), .hilo_temp_i(ex_hilo_temp_i),
