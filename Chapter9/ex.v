@@ -22,12 +22,12 @@ module ex (
     input wire                is_in_delayslot_i,    //EX阶段的指令是否为延迟槽指令
     input wire[`InstAddrBus]  link_address_i,       //保存的返回地址
 
-    input wire[`RegBus]       reg2_data_i,               //reg2，R[rt]的值，用于store指令
+    input wire[`RegBus]       reg2_data_i,          //reg2，R[rt]的值，用于store指令
 
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能
-    output reg[`RegBus]     alu_res_o,     //运算结果
+    output reg[`RegBus]     alu_res_o,     //运算结果，写入寄存器或作为mem_addr
 
     output reg             hi_we_o,       //Hi寄存器写使能
     output reg             lo_we_o,       //Lo寄存器写使能
@@ -48,19 +48,21 @@ module ex (
 
     /*
      * 对应load/store指令来说，该阶段就是计算有效地址的
+     * mem_addr=内存操作地址，是alu运算结果
     */
     output wire[`AluOpBus]   aluop_o,
-    output reg[`InstAddrBus] mem_addr_o,   //内存操作地址，是alu运算结果
-    output reg[`RegBus]      reg2_data_o   //作为存储指令的写入数据。sb rt, offset(rs)
+    output wire[`RegBus]     reg2_data_o   //作为存储指令的写入数据。sb rt, offset(rs)
 );
     reg [`RegBus] logic_res;            //保存逻辑运算结果
     reg [`RegBus] shift_res;            //保存位移运算结果
     reg [`RegBus] move_res;             //移动操作运算结果
     reg [`RegBus] arithmetic_res;       //算术操作运算结果
+    reg [`RegBus] memaddr_res;          //字节地址计算结果
     wire[4:0]     shift_count = op2_data_i[4:0];
 
     assign inst_o = inst_i;
     assign aluop_o = aluop_i;
+    assign reg2_data_o = reg2_data_i;
 
     /* 计算：逻辑、位移、移动运算结果 */
     always @(*) begin
@@ -69,6 +71,9 @@ module ex (
             shift_res <= `ZeroWord;
             move_res  <= `ZeroWord;
         end else begin
+            logic_res   <= `ZeroWord;
+            shift_res   <= `ZeroWord;
+            move_res    <= `ZeroWord;
             case (aluop_i)
                 `ALU_OR_OP: begin
                     logic_res <= op1_data_i | op2_data_i;
@@ -115,6 +120,18 @@ module ex (
                     move_res  <= `ZeroWord;
                 end
             endcase
+        end
+    end
+    
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            memaddr_res <= `ZeroWord;
+        end else begin
+            if (alusel_i == `ALU_RES_LOAD_STORE) begin
+                memaddr_res <= op1_data_i + op2_data_i;
+            end else begin
+                memaddr_res <= `ZeroWord;
+            end
         end
     end
 
@@ -191,7 +208,7 @@ module ex (
 
 
     /*
-     * Write Regfile选择结果：根据alusel_i选择运算结果输出
+     * 选择结果：根据alusel_i选择运算结果输出
     */
     always @(*) begin
         waddr_o <= waddr_i;
@@ -221,6 +238,10 @@ module ex (
 
             `ALU_RES_JUMP_BRANCH: begin
                 alu_res_o <= link_address_i;
+            end
+            
+            `ALU_RES_LOAD_STORE: begin
+                alu_res_o <= memaddr_res;
             end
 
             `ALU_RES_NOP: begin

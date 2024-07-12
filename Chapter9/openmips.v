@@ -1,20 +1,24 @@
-// 顶层模块，CPU的管脚
 `include "defines.v"
 
+/*
+ * CPU模块，暴露的是CPU针脚
+*/
 module openmips (
     input wire rst,
     input wire clk,
     input wire[`InstBus] rom_data_i,      // 指令存储器ROM输入的指令字
     input wire[`RegBus]  ram_data_i,      // 数据存储器RAM生成的数据字
 
+    /*输出到inst_rom模块*/
     output wire rom_ce_o,                 //ROM读使能
-    output wire[`InstAddrBus] rom_addr_o,  //输出到ROM的地址
+    output wire[`InstAddrBus] rom_addr_o, //输出到ROM的地址
 
-    output wire[`InstAddrBus] ram_addr_o,  //RAM读写地址
-    output wire               ram_we_o,    //RAM写？读？
-    output wire               ram_sel_o,   //字节长度选择
-    output wire[`RegBus]      ram_data_o,  //写入RAM的数据
-    output wire               ram_ce_o     //RAM工作使能
+    /*输出到data_ram模块*/
+    output wire[`InstAddrBus] ram_addr_o, //RAM读写地址
+    output wire               ram_we_o,   //RAM写？读？
+    output wire               ram_ce_o,   //RAM工作使能
+    output wire[`MemSelBus]   ram_sel_o,  //字节选择
+    output wire[`RegBus]      ram_wdata_o //写入RAM的数据
 );
     // 第一部分：连接各个模块的传送线缆
     // stall_ctrl部件
@@ -229,7 +233,6 @@ module openmips (
         .div_op2_o(opdata2_i),
         /*load/store*/
         .aluop_o(ex_aluop_o),
-        .mem_addr_o(ex_mem_addr_o),
         .reg2_data_o(ex_reg2_data_o)
     );
     div div_0(
@@ -265,7 +268,7 @@ module openmips (
         .ex_inst(ex_inst_o),
         .ex_waddr(ex_waddr_o), .ex_reg_we(ex_reg_we_o), .ex_alu_res(ex_alu_res_o),
         .ex_hi_we(ex_hi_we_o), .ex_lo_we(ex_lo_we_o), .ex_hi(ex_hi_o), .ex_lo(ex_lo_o),
-        .ex_aluop(ex_aluop_o), .ex_mem_addr(ex_mem_addr_o), .ex_reg2_data(ex_reg2_data_o),
+        .ex_aluop(ex_aluop_o), .ex_mem_addr(ex_alu_res_o), .ex_reg2_data(ex_reg2_data_o),
 
         .mem_waddr(mem_waddr_i), .mem_reg_we(mem_reg_we_i), .mem_alu_res(mem_alu_res_i),
         .mem_hi_we(mem_hi_we_i), .mem_lo_we(mem_lo_we_i), .mem_hi(mem_hi_i), .mem_lo(mem_lo_i),
@@ -295,11 +298,11 @@ module openmips (
         .hi_we_o(mem_hi_we_o), .lo_we_o(mem_lo_we_o), .hi_o(mem_hi_o), .lo_o(mem_lo_o),
         .inst_o(mem_inst_o),
         /*load、store*/
-        .mem_addr_o(),
-        .mem_we_o(),
-        .mem_sel_o(),
-        .mem_data_o(),
-        .mem_ce_o()
+        .mem_addr_o(ram_addr_o),
+        .mem_we_o(ram_we_o),
+        .mem_sel_o(ram_sel_o),
+        .mem_data_o(ram_wdata_o),
+        .mem_ce_o(ram_ce_o)
     );
 
     // MEM_WB寄存器

@@ -35,7 +35,7 @@ module id (
 
     output wire stallreq, 
 
-    output wire reg2_data_o,                // reg2，R[rt]的值，store类指令需要
+    output wire[`RegBus] reg2_data_o,       // reg2，R[rt]的值，store类指令需要
     
     //调试目的
     output wire[`InstBus] inst_o
@@ -51,8 +51,9 @@ module id (
     reg instvalid;                  // 因为要在 always 语句块中赋值，所以必须是 reg 类型，其实本质上还是wire。
     wire[`InstAddrBus] pc_plus_8   = pc_i + 8;      //延迟槽指令的下一个
     wire[`InstAddrBus] pc_plus_4   = pc_i + 4;      //延迟槽指令
+    wire[`InstAddrBus] signed_imm32 = {{16{imm16[15]}}, imm16};
     wire[`InstAddrBus] jump_addr   = {pc_plus_4[31:28], inst_i[25:0], 2'b00};  //{PC+4[31:28],index26,2'b00}
-    wire[`InstAddrBus] branch_addr = pc_plus_4 + {{14{imm16[15]}}, imm16[15:0], 2'b00};
+    wire[`InstAddrBus] branch_addr = pc_plus_4 + {signed_imm32[29:0], 2'b00};
 
 
 
@@ -945,6 +946,208 @@ module id (
                     end
                 end
 
+
+                /*
+                 * 内存地址：R[rs]+signedExt(imm16) ，EX阶段计算内存地址。
+                 * 目的寄存器：R[rt]
+                */
+                `OP_LB: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_LB_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= rt;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;
+                end
+                `OP_LBU: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_LBU_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= rt;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                    
+                end
+                `OP_LH: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_LH_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= rt;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                         
+                end
+                `OP_LHU: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_LHU_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= rt;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                     
+                end
+                `OP_LL: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_LL_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= rt;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                       
+                end
+                `OP_LW: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_LW_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= rt;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                         
+                end
+                `OP_LWL: begin                          //Think: 有些特殊
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_LWL_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= rt;
+                    //read1 reg
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //read2 reg
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                        
+                end
+                `OP_LWR: begin                          //Think: 有些特殊，R[rt]某些位是不改变的，故需要读一下rt
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_LWR_OP;
+                    //write
+                    wreg_o    <= `WriteEnable;
+                    waddr_o   <= rt;
+                    //reg1
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //reg2
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                         
+                end
+
+                /*
+                 * target_addr：R[rs]+signedExt(imm16) ，EX阶段计算内存地址。
+                 * M[target_addr] <- R[rt] 
+                */
+                `OP_SB: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_SB_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //reg1
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //reg2
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;              
+                end
+                `OP_SC: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_SC_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //reg1
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //reg2
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                       
+                end
+                `OP_SH: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_SH_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //reg1
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //reg2
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                              
+                end
+                `OP_SW: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_SW_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //reg1
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //reg2
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                      
+                end
+                `OP_SWL: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_SWL_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //reg1
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //reg2
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                        
+                end
+                `OP_SWR: begin
+                    instvalid <= `True_v;
+                    alusel_o  <= `ALU_RES_LOAD_STORE;
+                    aluop_o   <= `ALU_SWR_OP;
+                    //write
+                    wreg_o    <= `WriteDisable;
+                    //reg1
+                    reg1_read_o <= `ReadEnable;
+                    reg1_addr_o <= rs;
+                    //reg2
+                    reg2_read_o <= `ReadDisable;
+                    imm32       <= signed_imm32;                         
+                end
+
+                
                 default: begin
                     instvalid <= `False_v;
                 end

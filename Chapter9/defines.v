@@ -15,6 +15,7 @@
 `define ChipEnable 1'b1
 `define ChipDisable 1'b0
 `define Branch      1'b1
+`define MemSelBus   3:0
 
 /*
  * stall[0]  PC
@@ -217,6 +218,13 @@
 `define InstBus 31:0
 `define InstMemNum 131071
 `define InstMemNumLog2 17
+
+//数据存储器相关
+`define DataAddrBus 31:0  //地址总线宽度
+`define DataBus     31:0  //数据总线宽度
+`define ByteWidth  7:0
+`define DataMemNum 131072 //实际容量 131072*4=
+`define DataMemNumLog2 17 //实际使⽤的地址宽度，地址总线是19位，低2位片选信号，那么剩下17位就是存储体内定位存储单元了
 
 
 //ͨ寄存器文件相关
