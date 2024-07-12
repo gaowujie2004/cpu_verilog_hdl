@@ -1046,7 +1046,7 @@ module id (
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;
                     //read2 reg
-                    reg2_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadEnable;
                     reg2_addr_o <= rt;
                     imm32       <= signed_imm32;                        
                 end
