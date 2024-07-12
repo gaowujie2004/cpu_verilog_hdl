@@ -16,7 +16,7 @@ module mem (
     input wire[`AluOpBus]   aluop_i,
     input wire[`InstAddrBus]mem_addr_i,
     input wire[`RegBus]     reg2_data_i,  //写入RAM的数据
-    input wire[`RegBus]     mem_data_i,
+    input wire[`RegBus]     mem_data_i,   //读RAM的数据
 
 
     //输入流水寄存器
@@ -108,16 +108,16 @@ module mem (
                         end
                         2'b01: begin
                             mem_sel_o <= 4'b0100;
-                            waddr_o   <= {{24{mem_data_i[23]}}, mem_data_i[23:16]};
+                            wdata_o   <= {{24{mem_data_i[23]}}, mem_data_i[23:16]};
                         end
                         2'b10: begin
                             mem_sel_o <= 4'b0010;
-                            waddr_o   <= {{24{mem_data_i[15]}}, mem_data_i[15:8]};
+                            wdata_o   <= {{24{mem_data_i[15]}}, mem_data_i[15:8]};
                         end
 
                         2'b11: begin
                             mem_sel_o <= 4'b0001;
-                            waddr_o   <= {{24{mem_data_i[7]}}, mem_data_i[7:0]};
+                            wdata_o   <= {{24{mem_data_i[7]}}, mem_data_i[7:0]};
                         end          
                     endcase
                 end 
@@ -130,15 +130,15 @@ module mem (
                         end
                         2'b01: begin
                             mem_sel_o <= 4'b0100;
-                            waddr_o   <= {24'b0, mem_data_i[23:16]};
+                            wdata_o   <= {24'b0, mem_data_i[23:16]};
                         end
                         2'b10: begin
                             mem_sel_o <= 4'b0010;
-                            waddr_o   <= {24'b0, mem_data_i[15:8]};
+                            wdata_o   <= {24'b0, mem_data_i[15:8]};
                         end
                         2'b11: begin
                             mem_sel_o <= 4'b0001;
-                            waddr_o   <= {24'b0, mem_data_i[7:0]};
+                            wdata_o   <= {24'b0, mem_data_i[7:0]};
                         end      
                     endcase                 
                 end

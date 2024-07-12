@@ -1035,7 +1035,7 @@ module id (
                     reg2_read_o <= `ReadDisable;
                     imm32       <= signed_imm32;                         
                 end
-                `OP_LWL: begin                          //Think: 有些特殊
+                `OP_LWL: begin                          //Think: 有些特殊，R[rt]某些位是不改变的，故需要读一下rt
                     instvalid <= `True_v;
                     alusel_o  <= `ALU_RES_LOAD_STORE;
                     aluop_o   <= `ALU_LWL_OP;
@@ -1047,6 +1047,7 @@ module id (
                     reg1_addr_o <= rs;
                     //read2 reg
                     reg2_read_o <= `ReadDisable;
+                    reg2_addr_o <= rt;
                     imm32       <= signed_imm32;                        
                 end
                 `OP_LWR: begin                          //Think: 有些特殊，R[rt]某些位是不改变的，故需要读一下rt
@@ -1060,7 +1061,8 @@ module id (
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;
                     //reg2
-                    reg2_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadEnable;
+                    reg2_addr_o <= rt;
                     imm32       <= signed_imm32;                         
                 end
 
@@ -1078,7 +1080,8 @@ module id (
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;
                     //reg2
-                    reg2_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadEnable;
+                    reg2_addr_o <= rt;
                     imm32       <= signed_imm32;              
                 end
                 `OP_SC: begin
@@ -1091,7 +1094,8 @@ module id (
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;
                     //reg2
-                    reg2_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadEnable;
+                    reg2_addr_o <= rt;
                     imm32       <= signed_imm32;                       
                 end
                 `OP_SH: begin
@@ -1104,7 +1108,8 @@ module id (
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;
                     //reg2
-                    reg2_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadEnable;
+                    reg2_addr_o <= rt;
                     imm32       <= signed_imm32;                              
                 end
                 `OP_SW: begin
@@ -1117,7 +1122,8 @@ module id (
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;
                     //reg2
-                    reg2_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadEnable;
+                    reg2_addr_o <= rt;
                     imm32       <= signed_imm32;                      
                 end
                 `OP_SWL: begin
@@ -1130,7 +1136,8 @@ module id (
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;
                     //reg2
-                    reg2_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadEnable;
+                    reg2_addr_o <= rt;
                     imm32       <= signed_imm32;                        
                 end
                 `OP_SWR: begin
@@ -1143,7 +1150,8 @@ module id (
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;
                     //reg2
-                    reg2_read_o <= `ReadDisable;
+                    reg2_read_o <= `ReadEnable;
+                    reg2_addr_o <= rt;
                     imm32       <= signed_imm32;                         
                 end
 
@@ -1175,7 +1183,15 @@ module id (
         if (rst == `RstEnable) begin
             op2_data_o <= `ZeroWord;
         end else if (reg2_read_o == `ReadEnable) begin
-            op2_data_o <= reg2_data_i;
+            /*
+             * load、store要计算地址，第二操作数应该为立即数
+             * 但与此同时，LWR、LWL与store类指令都需要R[rt]的值，故reg2_read_o这种情况为ReadEnable
+            */
+            if (alusel_o == `ALU_RES_LOAD_STORE) begin
+                op2_data_o <= imm32;
+            end else begin
+                op2_data_o <= reg2_data_i;
+            end
         end else if (reg2_read_o == `ReadDisable) begin
             op2_data_o <= imm32;
         end else begin
