@@ -10,6 +10,9 @@ module id (
     input wire[`RegBus] reg2_data_i,        // 从regfile读的数据(最新的数据，已处理过数据相关问题)
 
     input wire          is_in_delayslot_i,  // ID/EX输入，当前处于IF阶段的指令是否为延迟槽指令
+
+    input wire[`RegAddrBus]  ex_waddr_i,    // 处于EX阶段的指令
+    input wire[`AluOpBus]    ex_aluop_i,    // 处于EX阶段的指令
     
     // 流水寄存器保存
     output reg[`AluSelBus] alusel_o,        // 运算类型？            
@@ -33,7 +36,7 @@ module id (
     output reg[`RegAddrBus]  reg2_addr_o,   // 读reg2寄存器地址
     // Why: 为什么是reg类型？因为在 always 中赋值，就必须是reg类型，当然综合后可能是连线或寄存器。
 
-    output wire stallreq, 
+    output reg stallreq, 
 
     output wire[`RegBus] reg2_data_o,       // reg2，R[rt]的值，store类指令需要
     
@@ -55,7 +58,18 @@ module id (
     wire[`InstAddrBus] jump_addr   = {pc_plus_4[31:28], inst_i[25:0], 2'b00};  //{PC+4[31:28],index26,2'b00}
     wire[`InstAddrBus] branch_addr = pc_plus_4 + {signed_imm32[29:0], 2'b00};
 
-
+    //load-use相关
+    reg stallreq_from_reg1_load_relate; //reg1读，但load类型指令写入reg1，数据前推任然解决不了
+    reg stallreq_from_reg2_load_relate;
+    wire ex_inst_is_load = ((ex_aluop_i == `ALU_LB_OP) || 
+                            (ex_aluop_i == `ALU_LBU_OP)||
+                            (ex_aluop_i == `ALU_LH_OP) ||
+                            (ex_aluop_i == `ALU_LHU_OP)||
+                            (ex_aluop_i == `ALU_LW_OP) ||
+                            (ex_aluop_i == `ALU_LWR_OP)||
+                            (ex_aluop_i == `ALU_LWL_OP)||
+                            (ex_aluop_i == `ALU_LL_OP) ||
+                            (ex_aluop_i == `ALU_SC_OP)) ? `True_v : `False_v;       //sc会修改R[rt]
 
     /*
      * 信号传递
@@ -1167,9 +1181,14 @@ module id (
      * 第二段：选择运算源操作数1
     */
     always @(*) begin
+        stallreq_from_reg1_load_relate  <= `NotStop;
         if (rst == `RstEnable) begin
             op1_data_o <= `ZeroWord;
         end else if (reg1_read_o == `ReadEnable) begin
+            if (ex_inst_is_load==`True_v  && ex_waddr_i==reg1_addr_o) begin
+                //load-use数据相关，那就会写目标寄存器
+                stallreq_from_reg1_load_relate <= `Stop;
+            end
             op1_data_o <= reg1_data_i;
         end else begin
             op1_data_o <= `ZeroWord;
@@ -1180,6 +1199,7 @@ module id (
      * 第三段：选择运算源操作数2
     */
     always @(*) begin
+        stallreq_from_reg2_load_relate  <= `NotStop;
         if (rst == `RstEnable) begin
             op2_data_o <= `ZeroWord;
         end else if (reg2_read_o == `ReadEnable) begin
@@ -1192,11 +1212,19 @@ module id (
             end else begin
                 op2_data_o <= reg2_data_i;
             end
+            if (ex_inst_is_load==`True_v && ex_waddr_i==reg2_addr_o) begin
+                //load-use数据相关，那就会写目标寄存器
+                stallreq_from_reg2_load_relate <= `True_v;
+            end 
         end else if (reg2_read_o == `ReadDisable) begin
             op2_data_o <= imm32;
         end else begin
             op2_data_o <= `ZeroWord;
         end
+    end
+
+    always @(*) begin
+        stallreq <= stallreq_from_reg1_load_relate || stallreq_from_reg2_load_relate;
     end
 
 endmodule

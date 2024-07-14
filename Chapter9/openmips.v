@@ -81,6 +81,7 @@ module openmips (
     wire[`RegAddrBus]  ex_waddr_o;     // EX阶段，数据转发
     wire               ex_reg_we_o;
     wire[`RegBus]      ex_alu_res_o;
+    wire[`AluOpBus]    ex_aluop_o;
 
         
     wire[`RegAddrBus]  mem_waddr_o;    // MEM阶段，数据转发
@@ -96,11 +97,13 @@ module openmips (
     wire[`RegAddrBus] id_reg2_addr_o;
     wire[`InstBus]    id_inst_o;
     wire              id_ex_is_in_delayslot_o;
+
     id id_0(
         .rst(rst), .pc_i(id_pc_i), .inst_i(id_inst_i),
         // regfile模块的输出
         .reg1_data_i(id_reg1_data_i), .reg2_data_i(id_reg2_data_i),
         .is_in_delayslot_i(id_ex_is_in_delayslot_o),
+        .ex_waddr_i(ex_waddr_o),  .ex_aluop_i(ex_aluop_o),
 
         // 输出-送入流水寄存器
         .alusel_o(id_alusel_o), 
@@ -200,7 +203,6 @@ module openmips (
     wire[`DoubleRegBus] div_result_o;
     wire                div_ready_o;
 
-    wire[`AluOpBus]    ex_aluop_o;
     wire[`InstAddrBus] ex_mem_addr_o; 
     wire[`RegBus]      ex_reg2_data_o;
 
