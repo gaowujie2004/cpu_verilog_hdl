@@ -236,3 +236,6 @@
 `define RegNum 32
 `define RegNumLog2 5
 `define NOPRegAddr 5'b00000
+
+//LLbit
+`define LLBitEnable 1'b1;
