@@ -38,7 +38,7 @@ module mem (
 
     output reg[`InstBus]  inst_o         //debuger
 );
-
+    wire[1:0] addr_lowest_two_bit = mem_addr_i[1:0];
     always @(*) begin
         if (rst == `RstEnable) begin
             waddr_o <= `NOPRegAddr;
@@ -91,7 +91,7 @@ module mem (
             case (aluop_i)
                 `ALU_LB_OP: begin               //不考虑地址对齐
                     mem_ce_o   <= `ChipEnable;
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         2'b00: begin
                             /*
                              * 0、4、8这样的地址，这样的地址位于4Byte起始处，故这样的地址是最低地址，
@@ -123,7 +123,7 @@ module mem (
                 end 
                 `ALU_LBU_OP: begin              //不考虑地址对齐
                     mem_ce_o   <= `ChipEnable;
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         2'b00: begin
                             mem_sel_o <= 4'b1000;
                             wdata_o   <= {24'b0, mem_data_i[31:24]};
@@ -144,7 +144,7 @@ module mem (
                 end
                 `ALU_LH_OP: begin               //2Byte对齐
                     mem_ce_o   <= `ChipEnable;
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         2'b00: begin
                             // sel[3]指明MSB
                             mem_sel_o <= 4'b1100;
@@ -168,7 +168,7 @@ module mem (
                 end
                 `ALU_LHU_OP: begin              //2Byte对齐
                     mem_ce_o   <= `ChipEnable;
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         2'b00: begin
                             // sel[3]指明MSB
                             mem_sel_o <= 4'b1100;
@@ -188,7 +188,7 @@ module mem (
                 end 
                 `ALU_LW_OP: begin               //4Byte对齐
                     mem_ce_o   <= `ChipEnable;
-                    if (mem_addr_i[1:0] == 2'b00) begin
+                    if (addr_lowest_two_bit == 2'b00) begin
                         mem_sel_o <= 4'b1111;
                         wdata_o   <= mem_data_i;
                     end else begin
@@ -206,7 +206,7 @@ module mem (
                     mem_sel_o  <= 4'b1111;
                     
                     /* 4-n */
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         //将加载到的字的最低有效位(LSB)4-0=4个字节数据，写入R[rt][31:0]
                         2'b00: begin
                             wdata_o  <= mem_data_i;
@@ -239,7 +239,7 @@ module mem (
                     mem_sel_o  <= 4'b1111;
                     
                     /* n+1 */
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         //将加载到的字的最高有效位(MSB)0+1=1个字节数据，写入R[rt][7:0]，R[rt][31:8]保持不变
                         2'b00: begin
                             wdata_o  <= {reg2_data_i[31:8], mem_data_i[31:24]};
@@ -272,7 +272,7 @@ module mem (
                     mem_ce_o   <= `ChipEnable;
                     mem_we_o   <= `WriteEnable;
                     mem_data_o <= {{reg2_data_i[7:0]}, {reg2_data_i[7:0]}, {reg2_data_i[7:0]}, {reg2_data_i[7:0]}};
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         2'b00: begin
                             mem_sel_o  <= 4'b1000;
                         end
@@ -295,7 +295,7 @@ module mem (
                     mem_ce_o   <= `ChipEnable;
                     mem_we_o   <= `WriteEnable;
                     mem_data_o <= {reg2_data_i[15:0], reg2_data_i[15:0]};
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         2'b00: begin
                             mem_sel_o  <= 4'b1100;
                         end
@@ -309,7 +309,7 @@ module mem (
                     mem_ce_o   <= `ChipEnable;
                     mem_we_o   <= `WriteEnable;
                     mem_data_o <= reg2_data_i;
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         2'b00: begin
                             mem_sel_o  <= 4'b1111;
                         end
@@ -324,7 +324,7 @@ module mem (
                     mem_ce_o   <= `ChipEnable;
                     mem_we_o   <= `WriteEnable;
                     mem_addr_o <= {mem_addr_i[31:2], 2'b00}; //不对齐也可以
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         /*将R[rt]最⾼4-0=4个字节存储到地址storeaddr处*/
                         2'b00: begin
                             mem_sel_o  <= 4'b1111;
@@ -367,7 +367,7 @@ module mem (
                     mem_ce_o   <= `ChipEnable;
                     mem_we_o   <= `WriteEnable;
                     mem_addr_o <= {mem_addr_i[31:2], 2'b00};
-                    case (mem_addr_i[1:0])
+                    case (addr_lowest_two_bit)
                         /*
                          * 源：R[rt]最低0+1=1个字节、目标首地址：storeaddr_align
                          * addr_i[1:0]=0，写入内存最低地址（MSB）
