@@ -285,6 +285,9 @@ module openmips (
     wire[`RegBus]      mem_hi_o;         
     wire[`RegBus]      mem_lo_o;  
     wire[`RegBus]      mem_inst_o;  
+    wire               llbit_o;
+    wire               mem_llbit_we_o;
+    wire               mem_llbit_value_o;
     mem mem_0(
         .rst(rst), 
         .inst_i(mem_inst_i),
@@ -293,6 +296,8 @@ module openmips (
         /*load、store*/
         .aluop_i(mem_aluop_i), .mem_addr_i(mem_mem_addr_i), 
         .reg2_data_i(mem_reg2_data_i), .mem_data_i(ram_data_i),
+        /*llbit*/
+        .llbit_i(llbit_o),
 
         .waddr_o(mem_waddr_o), .reg_we_o(mem_reg_we_o),  .wdata_o(mem_alu_res_o),
         .hi_we_o(mem_hi_we_o), .lo_we_o(mem_lo_we_o), .hi_o(mem_hi_o), .lo_o(mem_lo_o),
@@ -302,7 +307,10 @@ module openmips (
         .mem_we_o(ram_we_o),
         .mem_sel_o(ram_sel_o),
         .mem_data_o(ram_wdata_o),
-        .mem_ce_o(ram_ce_o)
+        .mem_ce_o(ram_ce_o),
+        /*llbit*/
+        .llbit_we_o(mem_llbit_we_o),
+        .llbit_value_o(mem_llbit_value_o)
     );
 
     // MEM_WB寄存器
@@ -311,16 +319,22 @@ module openmips (
     wire            wb_lo_we_i;
     wire[`RegBus]   wb_hi_i;
     wire[`RegBus]   wb_lo_i;
+    wire            wb_llbit_we;
+    wire            wb_llbit_value;
     mem_wb mem_wb_0(
         .rst(rst), .clk(clk),
         .stall(stall),
         .mem_inst(mem_inst_o),
         .mem_waddr(mem_waddr_o), .mem_reg_we(mem_reg_we_o), .mem_wdata(mem_alu_res_o),
         .mem_hi_we(mem_hi_we_o), .mem_lo_we(mem_lo_we_o), .mem_hi(mem_hi_o), .mem_lo(mem_lo_o),
+        .mem_llbit_we(mem_llbit_we_o),
+        .mem_llbit_value(mem_llbit_value_o),
+
         //输出
         .wb_waddr(wb_waddr_o), .wb_reg_we(wb_we_o), .wb_wdata(wb_wdata_o),   //送入regfile
         .wb_hi_we(wb_hi_we_i), .wb_lo_we(wb_lo_we_i), .wb_hi(wb_hi_i), .wb_lo(wb_lo_i), //送入hilo
-        .wb_inst(wb_inst_i) //送入regfile、hilo
+        .wb_inst(wb_inst_i), //送入regfile、hilo
+        .wb_llbit_we(wb_llbit_we), .wb_llbit_value(wb_llbit_value)
     );
 
     hilo hilo_0(
@@ -331,6 +345,16 @@ module openmips (
         //输出
         .hi_o(ex_hi_i), .lo_o(ex_lo_i)
     );
+
+    llbit llbit_0(
+    	.clk        (clk),
+        .rst        (rst),
+        .flush      (1'b0),
+        .wb_we_i    (wb_llbit_we),
+        .wb_llbit_i (wb_llbit_value),
+        .llbit_o    (llbit_o)
+    );
+    
     
 endmodule
 
