@@ -1089,7 +1089,7 @@ module id (
                     alusel_o  <= `ALU_RES_LOAD_STORE;
                     aluop_o   <= `ALU_SC_OP;
                     //write
-                    wreg_o    <= `WriteDisable;
+                    wreg_o    <= `WriteEnable; //与其他的store指令的区别
                     //reg1
                     reg1_read_o <= `ReadEnable;
                     reg1_addr_o <= rs;

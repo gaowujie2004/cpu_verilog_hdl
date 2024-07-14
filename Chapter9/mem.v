@@ -18,6 +18,8 @@ module mem (
     input wire[`RegBus]     reg2_data_i,  //写入RAM的数据
     input wire[`RegBus]     mem_data_i,   //读RAM的数据
 
+    /*llbit*/
+    input wire              llbit_i,
 
     //输入流水寄存器
     output reg[`RegAddrBus] waddr_o,     //目的寄存器地址
@@ -32,9 +34,13 @@ module mem (
     /*输入RAM*/
     output reg[`InstAddrBus]mem_addr_o,
     output reg              mem_we_o,
-    output reg[`MemSelBus]  mem_sel_o,   //字节选择，低位是指明LSB、高位是指明MSB
+    output reg[`MemSelBus]  mem_sel_o,   //字节选择，低位sel[0]是指明LSB、高位sel[3]是指明MSB
     output reg[`RegBus]     mem_data_o,  //向RAM输出的写入数据
     output reg              mem_ce_o,    //存储器使能控制
+
+    /*llbit*/
+    output reg llbit_we_o,
+    output reg llbit_value_o,
 
     output reg[`InstBus]  inst_o         //debuger
 );
@@ -57,6 +63,9 @@ module mem (
             mem_sel_o  <= 4'b0000;
             mem_data_o <= `ZeroWord;
             mem_ce_o   <= `ChipDisable;
+
+            llbit_we_o <= `WriteDisable;
+            llbit_value_o <= 1'b0;
         end else begin
             waddr_o <= waddr_i;
             reg_we_o <= reg_we_i;
@@ -79,6 +88,8 @@ module mem (
             mem_we_o   <= `WriteDisable;
             mem_sel_o  <= 4'b0000;
             mem_ce_o   <= `ChipDisable;
+            llbit_we_o <= `WriteDisable;
+            llbit_value_o <= 1'b0;
             /*
              * 大端字节序，低内存地址存放多字节数据的MSB。以下内存按字节编址。
              * 地址：0b00   0b01   0b10    0b11
@@ -183,8 +194,12 @@ module mem (
                         end      
                     endcase
                 end
-                `ALU_LL_OP: begin
-                    
+                `ALU_LL_OP: begin               //TODO: 不要求4byte对齐了吗？
+                    mem_ce_o    <= `ChipEnable;
+                    mem_sel_o   <= 4'b1111;
+                    wdata_o     <= mem_data_i;      
+                    llbit_we_o    <= `WriteEnable;
+                    llbit_value_o <= 1'b1;
                 end 
                 `ALU_LW_OP: begin               //4Byte对齐
                     mem_ce_o   <= `ChipEnable;
@@ -287,8 +302,21 @@ module mem (
                         end
                     endcase
                 end
-                `ALU_SC_OP: begin
-
+                `ALU_SC_OP: begin              //TODO: 不4byte对齐了吗？
+                    if (llbit_i == 1'b1) begin //RMW正常
+                        //RAM Write
+                        mem_ce_o   <= `ChipEnable;
+                        mem_we_o   <= `WriteEnable;
+                        mem_sel_o  <= 4'b1111;
+                        mem_data_o <= reg2_data_i;
+                        //R[rt] write
+                        wdata_o    <= {31'b0, 1'b1};
+                        //llbit
+                        llbit_we_o    <= `WriteEnable;
+                        llbit_value_o <= 1'b0;
+                    end else begin
+                        wdata_o    <= 32'b0;
+                    end
                 end
                 `ALU_SH_OP: begin       //two byte align
                     //reg2_data_i低16位写入
