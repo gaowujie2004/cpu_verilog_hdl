@@ -410,6 +410,9 @@ module openmips (
     cp0_reg cp0_reg_0(
     	.clk         (clk),
         .rst         (rst),
+        .mem_we_i(mem_cp0_we_o),
+        .mem_waddr_i(mem_cp0_waddr_o),
+        .mem_wdata_i(mem_cp0_wdata_o),
         .wb_we_i        (wb_cp0_we_i),
         .wb_waddr_i     (wb_cp0_waddr_i),
         .wb_wdata_i      (wb_cp0_wdata_i),
