@@ -442,7 +442,6 @@ module ex (
             cp0_waddr_o <= `ZeroWord;
             cp0_wdata_o <= `ZeroWord;
         end else begin
-            cp0_raddr_o <= `ZeroWord;
             cp0_we_o    <= `WriteDisable;
             cp0_waddr_o <= `ZeroWord;
             cp0_wdata_o <= `ZeroWord;
