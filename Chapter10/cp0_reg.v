@@ -9,15 +9,16 @@ module cp0_reg (
     input wire[5:0]     int_i,   //6个外部硬件中断源
     input wire[4:0]     raddr_i, //读CP0寄存器的地址
     
+    output reg          timer_int_o, //定时中断触发
     output reg[`RegBus] data_o,      //读取的值
+
     output reg[`RegBus] count_o,     //计数器的值，只读
     output reg[`RegBus] compare_o,   //与count_o对比的值，若相等则定时中断触发
     output reg[`RegBus] status_o,    //控制处理器的操作模式、中断使能以及诊断状态
     output reg[`RegBus] cause_o,     //主要记录最近⼀次异常发⽣的原因，也控制软件中断请求
     output reg[`RegBus] epc_o,       //中断返回地址
     output reg[`RegBus] config_o,    //处理器有关的各种配置和功能信息，只读
-    output reg[`RegBus] prid_o,      //CPU硬件信息，只读
-    output reg          timer_int_o  //定时中断触发
+    output reg[`RegBus] prid_o       //CPU硬件信息，只读
 );
     //先写
     always @(posedge clk) begin

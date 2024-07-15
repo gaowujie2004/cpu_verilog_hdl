@@ -19,7 +19,9 @@ module openmips (
     output wire               ram_we_o,   //RAM写？读？
     output wire               ram_ce_o,   //RAM工作使能
     output wire[`MemSelBus]   ram_sel_o,  //字节选择
-    output wire[`RegBus]      ram_wdata_o //写入RAM的数据
+    output wire[`RegBus]      ram_wdata_o, //写入RAM的数据
+
+	output wire               timer_int_o   //Why？什么用途
 );
     // 第一部分：连接各个模块的传送线缆
     // stall_ctrl部件
@@ -404,7 +406,7 @@ module openmips (
         .wb_llbit_i (wb_llbit_value),
         .llbit_o    (llbit_o)
     );
-
+ 
     cp0_reg cp0_reg_0(
     	.clk         (clk),
         .rst         (rst),
@@ -414,7 +416,8 @@ module openmips (
         .int_i       (int_i),
         .raddr_i     (ex_cp0_raddr_o),
 
-        .data_o      (ex_cp0_data_i)
+        .data_o      (ex_cp0_data_i),
+        .timer_int_o(timer_int_o)
     );
     
     
