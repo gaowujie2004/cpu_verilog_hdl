@@ -74,6 +74,7 @@ module cp0_reg (
     always @(posedge clk) begin
         if (rst == `RstEnable) begin
             data_o <= `ZeroWord;
+            timer_int_o <= `InterruptNotAssert;
         end else begin
             case (raddr_i)
                 `CP0_REG_COUNT: begin
