@@ -210,7 +210,7 @@ module openmips (
     wire[`RegBus]      ex_reg2_data_o;
 
     /*cp0 mt(f)c0*/
-    wire[`RegBus]    ex_cp0_raddr_o;    //读寄存器的地址
+    wire[4:0]        ex_cp0_raddr_o;    //读寄存器的地址
     wire[`RegBus]    ex_cp0_data_i;     //读取的数据
     wire             ex_cp0_we_o;       //写使能
     wire[4:0]        ex_cp0_waddr_o;    //写CP0寄存器的地址

@@ -48,7 +48,7 @@ module ex (
     output wire[`RegBus]   div_op2_o,      //除数
     output reg             div_start_o,    //div开始工作
 
-    output reg             cp0_raddr_o,    //读CP0寄存器的地址
+    output reg[4:0]        cp0_raddr_o,    //读CP0寄存器的地址
     //传递给流水线
     output reg             cp0_we_o,       //写使能
     output reg[4:0]        cp0_waddr_o,    //写CP0寄存器的地址
