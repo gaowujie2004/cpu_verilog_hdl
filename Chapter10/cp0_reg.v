@@ -3,9 +3,9 @@
 module cp0_reg (
     input wire clk,
     input wire rst,
-    input wire          we_i,
-    input wire[4:0]     waddr_i,
-    input wire[`RegBus] data_i,
+    input wire          wb_we_i,
+    input wire[4:0]     wb_waddr_i,
+    input wire[`RegBus] wb_wdata_i,
     input wire[5:0]     int_i,   //6个外部硬件中断源
     input wire[4:0]     raddr_i, //读CP0寄存器的地址
     
@@ -44,26 +44,26 @@ module cp0_reg (
             end
             cause_o[15:10]  <= int_i; //Cause的第10～15bit保存外部中断声明
 
-            if (we_i == `WriteEnable) begin
-                case (waddr_i)
+            if (wb_we_i == `WriteEnable) begin
+                case (wb_waddr_i)
                     `CP0_REG_COUNT: begin
-                        count_o   <= data_i;
+                        count_o   <= wb_wdata_i;
                     end
                     `CP0_REG_COMPARE: begin
-                        compare_o   <= data_i;
+                        compare_o   <= wb_wdata_i;
                         timer_int_o <= `InterruptNotAssert;
                     end
                     `CP0_REG_STATUS: begin
-                        status_o  <= data_i;
+                        status_o  <= wb_wdata_i;
                     end
                     `CP0_REG_CAUSE: begin
                         //Cause寄存器只有IP[1:0]、IV、WP字段是可写的
-                        cause_o[9:8] <= data_i[9:8];
-                        cause_o[23] <= data_i[23];
-                        cause_o[22] <= data_i[22];
+                        cause_o[9:8] <= wb_wdata_i[9:8];
+                        cause_o[23] <= wb_wdata_i[23];
+                        cause_o[22] <= wb_wdata_i[22];
                     end
                     `CP0_REG_EPC: begin
-                        epc_o     <= data_i;
+                        epc_o     <= wb_wdata_i;
                     end
                 endcase
             end
