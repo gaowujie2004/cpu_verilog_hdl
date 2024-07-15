@@ -78,7 +78,7 @@ module cp0_reg (
     end
 
     //后读
-    always @(posedge clk) begin
+    always @(*) begin
         if (rst == `RstEnable) begin
             data_o <= `ZeroWord;
             timer_int_o <= `InterruptNotAssert;
