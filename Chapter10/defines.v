@@ -56,6 +56,10 @@
 `define OP_SWL    6'b101010
 `define OP_SWR    6'b101110
 
+`define CP0MT     11'b01000000100
+`define CP0MF     11'b01000000000
+
+
 `define OP_PREF   6'b110011
 
 // 子功能-FUNC字段
@@ -189,6 +193,10 @@
 `define ALU_SW_OP       8'b11101011
 `define ALU_SWL_OP      8'b11101010
 `define ALU_SWR_OP      8'b11101110
+
+`define ALU_MFC0_OP     8'b01011101
+`define ALU_MTC0_OP     8'b01100000
+
 
 `define ALU_NOP_OP      8'b00000000
 // AluSel

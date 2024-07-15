@@ -1174,6 +1174,39 @@ module id (
                     instvalid <= `False_v;
                 end
             endcase
+
+            
+            if (inst_i[31:21] == 11'b01000000000 && inst_i[10:0] == 11'b00000000000) begin
+                /*
+                 * Desc: mfc0 rt, rd
+                 * RTL:  GPR[rt] <- CPR[0,rd]
+                */
+                instvalid <= `True_v;
+                alusel_o  <= `ALU_RES_MOVE;
+                aluop_o   <= `ALU_MFC0_OP;
+                //write
+                wreg_o    <= `WriteEnable;
+                waddr_o   <= rt;
+                //read1 reg
+                reg1_read_o <= `ReadDisable;
+                //read2 reg
+                reg2_read_o <= `ReadDisable;
+            end else if (inst_i[31:21] == 11'b01000000100 && inst_i[10:0] == 11'b00000000000) begin
+                /*
+                 * Desc: mtc0 rt, rd
+                 * RTL:  CPR[0,rd] <- GPR[rt]
+                */
+                instvalid <= `True_v;
+                alusel_o  <= `ALU_RES_MOVE;
+                aluop_o   <= `ALU_MTC0_OP;
+                //write
+                wreg_o    <= `WriteDisable;
+                //read1 reg
+                reg1_read_o <= `ReadDisable;
+                //read2 reg
+                reg2_read_o <= `ReadEnable;
+                reg2_addr_o <= rt;
+            end
         end
     end
     

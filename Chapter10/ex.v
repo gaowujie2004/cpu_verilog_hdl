@@ -67,6 +67,7 @@ module ex (
     reg [`RegBus] arithmetic_res;       //算术操作运算结果
     reg [`RegBus] memaddr_res;          //字节地址计算结果
     wire[4:0]     shift_count = op2_data_i[4:0];
+    wire[4:0]     rd = inst_i[15:11];
 
     assign inst_o = inst_i;
     assign aluop_o = aluop_i;
@@ -114,6 +115,15 @@ module ex (
                 end
                 `ALU_MFLO_OP: begin
                     move_res <= lo_i;
+                end
+
+                `ALU_MFC0_OP: begin
+                    /*
+                     * Desc: mfc0 rt, rd
+                     * RTL:  GPR[rt] <- CPR[0,rd]
+                    */
+                    cp0_raddr_o <= rd;
+                    move_res <= cp0_data_i;
                 end
 
                 `ALU_NOP_OP: begin
@@ -418,6 +428,36 @@ module ex (
                     lo_o    <= `ZeroWord;
                 end
             endcase
+        end
+    end
+
+    /*
+     * CP0 
+     * CP0_WE、CP0_wdata、CP0_waddr信号生成
+    */
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            cp0_raddr_o <= `ZeroWord;
+            cp0_we_o    <= `WriteDisable;
+            cp0_waddr_o <= `ZeroWord;
+            cp0_wdata_o <= `ZeroWord;
+        end else begin
+            cp0_raddr_o <= `ZeroWord;
+            cp0_we_o    <= `WriteDisable;
+            cp0_waddr_o <= `ZeroWord;
+            cp0_wdata_o <= `ZeroWord;
+
+            /*
+             * Desc: mtc0 rt, rd
+             * RTL:  CPR[0,rd] <- GPR[rt]
+            */
+            if (aluop_i == `ALU_MTC0_OP) begin
+                cp0_we_o    <= `WriteEnable;
+                cp0_waddr_o <= rd;
+                cp0_wdata_o <=  op2_data_i;
+            end else begin
+                cp0_we_o    <= `WriteDisable;
+            end
         end
     end
 
