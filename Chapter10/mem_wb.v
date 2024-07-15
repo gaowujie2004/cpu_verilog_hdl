@@ -19,6 +19,10 @@ module mem_wb (
     input wire             mem_llbit_we,    //访存阶段的指令是否要写LLbit寄存器
     input wire             mem_llbit_value, //访存阶段的指令写入LLbit的数据
 
+    /*cp0 mt(f)c0*/
+    input wire             mem_cp0_we,     //写使能
+    input wire[4:0]        mem_cp0_waddr,  //写CP0寄存器的地址
+    input wire[`RegBus]    mem_cp0_wdata,  //写入CP0寄存器的数据
 
     output reg[`RegAddrBus] wb_waddr,
     output reg              wb_reg_we,
@@ -31,6 +35,11 @@ module mem_wb (
 
     output reg              wb_llbit_we,    
     output reg              wb_llbit_value, 
+
+    /*cp0 mt(f)c0*/
+    output reg              wb_cp0_we,      //写使能
+    output reg[4:0]         wb_cp0_waddr,   //写CP0寄存器的地址
+    output reg[`RegBus]     wb_cp0_wdata,   //写入CP0寄存器的数据
 
     output reg[`InstBus]    wb_inst        //debuger
 );
@@ -48,6 +57,10 @@ module mem_wb (
 
             wb_llbit_we    <= `WriteDisable;
             wb_llbit_value <= 1'b0;
+
+            wb_cp0_we     <= `WriteDisable;
+            wb_cp0_waddr  <= `ZeroWord;
+            wb_cp0_wdata  <= `ZeroWord;
 
             wb_inst    <= `ZeroWord;
         end else begin
@@ -70,6 +83,10 @@ module mem_wb (
                 wb_llbit_we    <= `WriteDisable;
                 wb_llbit_value <= 1'b0;
 
+                wb_cp0_we     <= `WriteDisable;
+                wb_cp0_waddr  <= `ZeroWord;
+                wb_cp0_wdata  <= `ZeroWord;
+
                 wb_inst    <= mem_inst;         //debuger        
             end else if (stall[4] == `NotStop) begin
                 /*
@@ -86,6 +103,10 @@ module mem_wb (
 
                 wb_llbit_we    <= mem_llbit_we;
                 wb_llbit_value <= mem_llbit_value;
+
+                wb_cp0_we     <= mem_cp0_we;
+                wb_cp0_waddr  <= mem_cp0_waddr;
+                wb_cp0_wdata  <= mem_cp0_wdata;
 
                 wb_inst    <= mem_inst;                
             end else begin

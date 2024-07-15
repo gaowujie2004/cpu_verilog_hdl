@@ -21,6 +21,11 @@ module mem (
     /*llbit*/
     input wire              llbit_i,
 
+    /*cp0 mt(f)c0*/
+    input wire              cp0_we_i,     //写使能
+    input wire[4:0]         cp0_waddr_i,  //写CP0寄存器的地址
+    input wire[`RegBus]     cp0_wdata_i,  //写入CP0寄存器的数据
+
     //输入流水寄存器
     output reg[`RegAddrBus] waddr_o,     //目的寄存器地址
     output reg              reg_we_o,    //目的寄存器写使能
@@ -41,6 +46,11 @@ module mem (
     /*llbit*/
     output reg llbit_we_o,
     output reg llbit_value_o,
+
+    /*cp0 mt(f)c0*/
+    output reg              cp0_we_o,     //写使能
+    output reg[4:0]         cp0_waddr_o,  //写CP0寄存器的地址
+    output reg[`RegBus]     cp0_wdata_o,  //写入CP0寄存器的数据
 
     output reg[`InstBus]  inst_o         //debuger
 );
@@ -66,6 +76,10 @@ module mem (
 
             llbit_we_o <= `WriteDisable;
             llbit_value_o <= 1'b0;
+
+            cp0_we_o     <= `WriteDisable;
+            cp0_waddr_o  <= `ZeroWord;
+            cp0_wdata_o  <= `ZeroWord;
         end else begin
             waddr_o <= waddr_i;
             reg_we_o <= reg_we_i;
@@ -77,6 +91,10 @@ module mem (
             lo_o      <= lo_i;
 
             inst_o    <= inst_i;
+
+            cp0_we_o     <= cp0_we_i;
+            cp0_waddr_o  <= cp0_waddr_i;
+            cp0_wdata_o  <= cp0_wdata_i;
 
             /*
              * load、store指令

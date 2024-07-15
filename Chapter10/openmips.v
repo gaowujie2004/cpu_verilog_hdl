@@ -8,6 +8,7 @@ module openmips (
     input wire clk,
     input wire[`InstBus] rom_data_i,      // 指令存储器ROM输入的指令字
     input wire[`RegBus]  ram_data_i,      // 数据存储器RAM生成的数据字
+    input wire[5:0]      int_i,           // 6个外部硬件中断源
 
     /*输出到inst_rom模块*/
     output wire rom_ce_o,                 //ROM读使能
@@ -206,7 +207,12 @@ module openmips (
     wire[`InstAddrBus] ex_mem_addr_o; 
     wire[`RegBus]      ex_reg2_data_o;
 
-
+    /*cp0 mt(f)c0*/
+    wire[`RegBus]    ex_cp0_raddr_o;    //读寄存器的地址
+    wire[`RegBus]    ex_cp0_data_i;     //读取的数据
+    wire             ex_cp0_we_o;       //写使能
+    wire[4:0]        ex_cp0_waddr_o;    //写CP0寄存器的地址
+    wire[`RegBus]    ex_cp0_wdata_o;    //写入CP0寄存器的数据
     ex ex_0(
         .rst(rst), .inst_i(ex_inst_i),
         .alusel_i(ex_alusel_i), .aluop_i(ex_aluop_i),
@@ -218,6 +224,7 @@ module openmips (
         .link_address_i(ex_link_addr_i),
         .is_in_delayslot_i(ex_is_indelayslot_i),
         .reg2_data_i(ex_reg2_data_i),
+        .cp0_data_i(ex_cp0_data_i),
 
         /*写regfile相关信号*/
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o),
@@ -235,7 +242,12 @@ module openmips (
         .div_op2_o(opdata2_i),
         /*load/store*/
         .aluop_o(ex_aluop_o),
-        .reg2_data_o(ex_reg2_data_o)
+        .reg2_data_o(ex_reg2_data_o),
+        /*cp0*/
+        .cp0_raddr_o(ex_cp0_raddr_o),
+        .cp0_we_o(ex_cp0_we_o),
+        .cp0_waddr_o(ex_cp0_waddr_o),
+        .cp0_wdata_o(ex_cp0_wdata_o)
     );
     div div_0(
     	.clk(clk), .rst(rst),
@@ -263,6 +275,9 @@ module openmips (
     wire[`AluOpBus]    mem_aluop_i;
     wire[`InstAddrBus] mem_mem_addr_i; 
     wire[`RegBus]      mem_reg2_data_i;
+    wire               mem_cp0_we_i;       //写使能
+    wire[4:0]          mem_cp0_waddr_i;    //写CP0寄存器的地址
+    wire[`RegBus]      mem_cp0_wdata_i;    //写入CP0寄存器的数据
     ex_mem ex_mem_0(
         .rst(rst), .clk(clk), 
         .stall(stall),
@@ -271,6 +286,10 @@ module openmips (
         .ex_waddr(ex_waddr_o), .ex_reg_we(ex_reg_we_o), .ex_alu_res(ex_alu_res_o),
         .ex_hi_we(ex_hi_we_o), .ex_lo_we(ex_lo_we_o), .ex_hi(ex_hi_o), .ex_lo(ex_lo_o),
         .ex_aluop(ex_aluop_o), .ex_mem_addr(ex_alu_res_o), .ex_reg2_data(ex_reg2_data_o),
+        /*cp0 mt(f)c0*/
+        .ex_cp0_we(ex_cp0_we_o),
+        .ex_cp0_waddr(ex_cp0_waddr_o),
+        .ex_cp0_wdata(ex_cp0_wdata_o),
 
         .mem_waddr(mem_waddr_i), .mem_reg_we(mem_reg_we_i), .mem_alu_res(mem_alu_res_i),
         .mem_hi_we(mem_hi_we_i), .mem_lo_we(mem_lo_we_i), .mem_hi(mem_hi_i), .mem_lo(mem_lo_i),
@@ -278,7 +297,11 @@ module openmips (
         /*madd、msub*/
         .cnt_o(ex_cnt_i), .hilo_temp_o(ex_hilo_temp_i),
         /*load、store*/
-        .mem_aluop(mem_aluop_i), .mem_mem_addr(mem_mem_addr_i), .mem_reg2_data(mem_reg2_data_i)
+        .mem_aluop(mem_aluop_i), .mem_mem_addr(mem_mem_addr_i), .mem_reg2_data(mem_reg2_data_i),
+        /*cp0 mt(f)c0*/
+        .mem_cp0_we(mem_cp0_we_i),
+        .mem_cp0_waddr(mem_cp0_waddr_i),
+        .mem_cp0_wdata(mem_cp0_wdata_i)
     );
 
     // MEM阶段
@@ -290,6 +313,11 @@ module openmips (
     wire               llbit_o;
     wire               mem_llbit_we_o;
     wire               mem_llbit_value_o;
+    /*cp0 mf(t)c0*/
+    wire               mem_cp0_we_o;       //写使能
+    wire[4:0]          mem_cp0_waddr_o;    //写CP0寄存器的地址
+    wire[`RegBus]      mem_cp0_wdata_o;    //写入CP0寄存器的数据
+
     mem mem_0(
         .rst(rst), 
         .inst_i(mem_inst_i),
@@ -300,6 +328,10 @@ module openmips (
         .reg2_data_i(mem_reg2_data_i), .mem_data_i(ram_data_i),
         /*llbit*/
         .llbit_i(llbit_o),
+        /*cp0 mf(t)c0*/
+        .cp0_we_i(mem_cp0_we_i),
+        .cp0_waddr_i(mem_cp0_waddr_i),
+        .cp0_wdata_i(mem_cp0_wdata_i),
 
         .waddr_o(mem_waddr_o), .reg_we_o(mem_reg_we_o),  .wdata_o(mem_alu_res_o),
         .hi_we_o(mem_hi_we_o), .lo_we_o(mem_lo_we_o), .hi_o(mem_hi_o), .lo_o(mem_lo_o),
@@ -312,7 +344,11 @@ module openmips (
         .mem_ce_o(ram_ce_o),
         /*llbit*/
         .llbit_we_o(mem_llbit_we_o),
-        .llbit_value_o(mem_llbit_value_o)
+        .llbit_value_o(mem_llbit_value_o),
+        /*cp0 mf(t)c0*/
+        .cp0_we_o(mem_cp0_we_o),
+        .cp0_waddr_o(mem_cp0_waddr_o),
+        .cp0_wdata_o(mem_cp0_wdata_o)
     );
 
     // MEM_WB寄存器
@@ -323,6 +359,10 @@ module openmips (
     wire[`RegBus]   wb_lo_i;
     wire            wb_llbit_we;
     wire            wb_llbit_value;
+    /*cp0 mf(t)c0*/
+    wire               wb_cp0_we_i;       //写使能
+    wire[4:0]          wb_cp0_waddr_i;    //写CP0寄存器的地址
+    wire[`RegBus]      wb_cp0_wdata_i;    //写入CP0寄存器的数据
     mem_wb mem_wb_0(
         .rst(rst), .clk(clk),
         .stall(stall),
@@ -331,12 +371,20 @@ module openmips (
         .mem_hi_we(mem_hi_we_o), .mem_lo_we(mem_lo_we_o), .mem_hi(mem_hi_o), .mem_lo(mem_lo_o),
         .mem_llbit_we(mem_llbit_we_o),
         .mem_llbit_value(mem_llbit_value_o),
+        /*cp0 mt(f)c0*/
+        .mem_cp0_we(mem_cp0_we_o),
+        .mem_cp0_waddr(mem_cp0_waddr_o),
+        .mem_cp0_wdata(mem_cp0_wdata_o),
 
         //输出
         .wb_waddr(wb_waddr_o), .wb_reg_we(wb_we_o), .wb_wdata(wb_wdata_o),   //送入regfile
         .wb_hi_we(wb_hi_we_i), .wb_lo_we(wb_lo_we_i), .wb_hi(wb_hi_i), .wb_lo(wb_lo_i), //送入hilo
         .wb_inst(wb_inst_i), //送入regfile、hilo
-        .wb_llbit_we(wb_llbit_we), .wb_llbit_value(wb_llbit_value)
+        .wb_llbit_we(wb_llbit_we), .wb_llbit_value(wb_llbit_value),
+        /*cp0 mt(f)c0*/
+        .wb_cp0_we(wb_cp0_we_i),
+        .wb_cp0_waddr(wb_cp0_waddr_i),
+        .wb_cp0_wdata(wb_cp0_wdata_i)
     );
 
     hilo hilo_0(
@@ -356,6 +404,19 @@ module openmips (
         .wb_llbit_i (wb_llbit_value),
         .llbit_o    (llbit_o)
     );
+
+    cp0_reg cp0_reg_0(
+    	.clk         (clk),
+        .rst         (rst),
+        .we_i        (wb_cp0_we_i),
+        .waddr_i     (wb_cp0_waddr_i),
+        .data_i      (wb_cp0_wdata_i),
+        .int_i       (int_i),
+        .raddr_i     (ex_cp0_raddr_o),
+
+        .data_o      (ex_cp0_data_i)
+    );
+    
     
     
 endmodule

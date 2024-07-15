@@ -24,6 +24,8 @@ module ex (
 
     input wire[`RegBus]       reg2_data_i,          //reg2，R[rt]的值，用于store指令
 
+    input wire[`RegBus]       cp0_data_i,       //cp0的数据输入
+
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能
@@ -45,6 +47,12 @@ module ex (
     output wire[`RegBus]   div_op1_o,      //被除数
     output wire[`RegBus]   div_op2_o,      //除数
     output reg             div_start_o,    //div开始工作
+
+    output reg             cp0_raddr_o,    //读CP0寄存器的地址
+    //传递给流水线
+    output reg             cp0_we_o,       //写使能
+    output reg[4:0]        cp0_waddr_o,    //写CP0寄存器的地址
+    output reg[`RegBus]    cp0_wdata_o,    //写入CP0寄存器的数据
 
     /*
      * 对应load/store指令来说，该阶段就是计算有效地址的
