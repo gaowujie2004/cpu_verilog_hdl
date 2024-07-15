@@ -239,3 +239,14 @@
 
 //LLbit
 `define LLBitEnable 1'b1;
+
+//CP0
+`define CP0_REG_COUNT    5'b01001        
+`define CP0_REG_COMPARE  5'b01011      
+`define CP0_REG_STATUS   5'b01100       
+`define CP0_REG_CAUSE    5'b01101        
+`define CP0_REG_EPC      5'b01110          
+`define CP0_REG_PrId     5'b01111         
+`define CP0_REG_CONFIG   5'b10000 
+`define InterruptAssert  1'b1
+`define InterruptNotAssert 1'b0
