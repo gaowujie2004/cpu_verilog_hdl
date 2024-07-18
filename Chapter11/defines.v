@@ -258,3 +258,14 @@
 `define CP0_REG_CONFIG   5'b10000 
 `define InterruptAssert  1'b1
 `define InterruptNotAssert 1'b0
+
+//异常相关
+`define ExceptionBus    2:0
+`define Exc_InvalidInst 3'b000
+`define Exc_Syscall     3'b001
+`define Exc_Eret        3'b010
+
+`define Exc_Trap        3'b011
+`define Exc_Overflow    3'b100
+
+`define Exc_Interrupt   3'b101
