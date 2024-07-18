@@ -7,6 +7,7 @@ module if_id (
     input wire rst,
     input wire clk,
     input wire[`StallBus] stall,
+    input wire            flush,        //响应中断，清零
 
     input wire[`InstAddrBus] if_pc,
     input wire[`InstBus]     if_inst,
@@ -17,7 +18,7 @@ module if_id (
 
     always @(posedge clk ) begin
         // 同步复位
-        if (rst == `RstEnable) begin
+        if (rst == `RstEnable || flush == `True_v) begin
             id_pc <= `ZeroWord;
             id_inst <= `ZeroWord;   //NOP空指令
         end else begin 
