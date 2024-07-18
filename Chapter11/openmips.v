@@ -24,7 +24,7 @@ module openmips (
 	output wire               timer_int_o   //Why？什么用途
 );
     // 第一部分：连接各个模块的传送线缆
-    // stall_ctrl部件
+    // pipeline_ctrl部件
     wire stallreq_from_id;
     wire stallreq_from_ex;
     wire[`StallBus] stall;
@@ -60,7 +60,7 @@ module openmips (
         .id_inst(id_inst_i)
     );
 
-    stall_ctrl stall_ctrl_0(
+    pipeline_ctrl pipeline_ctrl_0(
         .rst(rst),
         .stallreq_from_id(stallreq_from_id),
         .stallreq_from_ex(stallreq_from_ex),
@@ -124,7 +124,7 @@ module openmips (
         .reg1_addr_o(id_reg1_addr_o),
         .reg2_read_o(id_reg2_read_o),
         .reg2_addr_o(id_reg2_addr_o),
-        //送入stall_ctrl模块
+        //送入pipeline_ctrl模块
         .stallreq(stallreq_from_id),
         //调试目的
         .inst_o(id_inst_o),
@@ -232,7 +232,7 @@ module openmips (
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o),
         /*写hilo相关信号*/
         .hi_we_o(ex_hi_we_o), .lo_we_o(ex_lo_we_o), .hi_o(ex_hi_o), .lo_o(ex_lo_o),
-        /*送入stall_ctrl模块*/
+        /*送入pipeline_ctrl模块*/
         .stallreq(stallreq_from_ex),
         /*debuger*/
         .inst_o(ex_inst_o),

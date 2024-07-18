@@ -1,9 +1,11 @@
 `include "defines.v"
 
+
+
 /*
- * 生成流水线暂停控制信号
+ * 生成流水线暂停控制信号、清零信号，控制流水线运行
 */
-module stall_ctrl (
+module pipeline_ctrl (
     input wire rst,
     input wire stallreq_from_id,
     input wire stallreq_from_ex,
