@@ -20,6 +20,10 @@ module id_ex (
     input wire[`InstAddrBus] id_link_address,    //返回地址，写入目的寄存器
     input wire              id_next_inst_in_delayslot, //IF阶段的指令是否是延迟槽指令
     input wire[`RegBus]     id_reg2_data,     //reg2，R[rt]的值，用于store指令
+    // 异常相关
+    input wire                    flush,                          //响应中断
+    input wire[`ExceptionTypeBus] id_exception_type,              //异常类型
+    input wire[`InstAddrBus]      id_inst_addr,                          //ID阶段的指令的地址
 
     output reg[`AluSelBus]  ex_alusel,
     output reg[`AluOpBus]   ex_aluop,
@@ -31,12 +35,14 @@ module id_ex (
     output reg              ex_is_indelayslot, //ID阶段的指令是否是延迟槽指令
     output reg[`InstAddrBus]ex_link_address,   //返回地址，写入目的寄存器
     output reg              is_in_delayslot,   //id_next_inst_in_delayslot作为输出
-    output reg[`RegBus]     ex_reg2_data     //reg2，R[rt]的值，用于store指令
+    output reg[`RegBus]     ex_reg2_data,      //reg2，R[rt]的值，用于store指令
+    output reg[`ExceptionTypeBus] ex_exception_type,    //异常类型
+    output reg[`InstAddrBus]      ex_inst_addr          //ID阶段指令的地址
 );
 
     always @(posedge clk) begin
         // 同步复位
-        if (rst == `RstEnable) begin
+        if (rst == `RstEnable || flush == `True_v) begin
 			ex_alusel <= `ALU_RES_NOP;
             ex_aluop <= `ALU_NOP_OP;
 			ex_op1_data <= `ZeroWord;
@@ -48,6 +54,8 @@ module id_ex (
             ex_link_address    <= `ZeroWord;
             is_in_delayslot    <= `False_v;
             ex_reg2_data       <= `ZeroWord;
+            ex_exception_type  <= `Exc_Default;
+            ex_inst_addr       <= `ZeroWord;
         end else begin
             if (stall[2]==`Stop && stall[3]==`NotStop) begin
                 //气泡
@@ -62,6 +70,8 @@ module id_ex (
                 ex_link_address    <= `ZeroWord;    
                 // Why: 为什么呢？is_in_delayslot  not change
                 ex_reg2_data       <= `ZeroWord;
+                ex_exception_type  <= `Exc_Default;
+                ex_inst_addr       <= `ZeroWord;
             end else if(stall[2] == `NotStop) begin
                 //无暂停
                 ex_alusel <= id_alusel;
@@ -75,6 +85,8 @@ module id_ex (
                 ex_link_address    <= id_link_address;   
                 is_in_delayslot    <= id_next_inst_in_delayslot;
                 ex_reg2_data       <= id_reg2_data;
+                ex_exception_type  <= id_exception_type;
+                ex_inst_addr       <= id_inst_addr;
             end else begin
                 // not change
                 // 暂停

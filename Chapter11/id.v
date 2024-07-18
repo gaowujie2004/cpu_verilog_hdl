@@ -39,6 +39,10 @@ module id (
     output reg stallreq, 
 
     output wire[`RegBus] reg2_data_o,       // reg2，R[rt]的值，store类指令需要
+
+    // 异常相关
+    output reg[`ExceptionTypeBus]  exception_type_o,              //异常类型
+    output wire[`InstAddrBus]      inst_addr_o,                   //ID阶段的指令的地址
     
     //调试目的
     output wire[`InstBus] inst_o
@@ -76,6 +80,7 @@ module id (
     */
     assign inst_o = inst_i;
     assign reg2_data_o = reg2_data_i;
+    assign inst_addr_o = pc_i;
     
 
     /*
