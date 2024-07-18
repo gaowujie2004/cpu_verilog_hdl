@@ -20,7 +20,7 @@ module pipeline_ctrl (
              * Why: 为什么先判断ex阶段，而不是id阶段？或者说此次的顺序调换会影响预期吗？
              * Because：若ex、id都暂停，必须先判断ex，因为ex写入stall=6'b001111，而id写入stall=6'b000111，明显ex包含id
             */
-            stall <= 6'b001111; //数值的右边是低位。
+            stall <= 6'b001111; //数值的右边是低位，低位从PC_reg依次向后、IF/EX、EX/MEM ....。
         end else if (stallreq_from_id == `Stop) begin
             stall <= 6'b000111;
         end else begin
