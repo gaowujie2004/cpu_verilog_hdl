@@ -26,6 +26,10 @@ module mem (
     input wire[4:0]         cp0_waddr_i,  //写CP0寄存器的地址
     input wire[`RegBus]     cp0_wdata_i,  //写入CP0寄存器的数据
 
+    /*异常相关*/
+    input wire[`ExceptionTypeBus] exception_type_i,              //异常类型
+    input wire[`InstAddrBus]      inst_addr_i,                   //EX阶段的指令的地址
+
     //输入流水寄存器
     output reg[`RegAddrBus] waddr_o,     //目的寄存器地址
     output reg              reg_we_o,    //目的寄存器写使能
@@ -52,8 +56,14 @@ module mem (
     output reg[4:0]         cp0_waddr_o,  //写CP0寄存器的地址
     output reg[`RegBus]     cp0_wdata_o,  //写入CP0寄存器的数据
 
+    /*异常相关*/
+    output reg[`ExceptionTypeBus]  exception_type_o,              //异常类型
+    output wire[`InstAddrBus]      inst_addr_o,                   //当前阶段的指令的地址
+
     output reg[`InstBus]  inst_o         //debuger
 );
+    assign inst_addr_o = inst_addr_i;
+
     wire[1:0] addr_lowest_two_bit = mem_addr_i[1:0];
     always @(*) begin
         if (rst == `RstEnable) begin
