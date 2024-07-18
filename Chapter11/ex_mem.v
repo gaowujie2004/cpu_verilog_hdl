@@ -35,6 +35,11 @@ module ex_mem (
     input wire[4:0]         ex_cp0_waddr,   //写CP0寄存器的地址
     input wire[`RegBus]     ex_cp0_wdata,   //写入CP0寄存器的数据
 
+    /*异常相关*/
+    input wire                    flush,                    //响应中断
+    input wire[`ExceptionTypeBus] ex_exception_type,        //异常类型
+    input wire[`InstAddrBus]      ex_inst_addr,             //EX阶段的指令的地址
+
     output reg[`RegAddrBus] mem_waddr,       
     output reg              mem_reg_we,      
     output reg[`RegBus]     mem_alu_res,
@@ -55,6 +60,10 @@ module ex_mem (
     output reg              mem_cp0_we,      //写使能
     output reg[4:0]         mem_cp0_waddr,   //写CP0寄存器的地址
     output reg[`RegBus]     mem_cp0_wdata,   //写入CP0寄存器的数据
+
+    /*异常相关*/
+    output reg[`ExceptionTypeBus] mem_exception_type,    //异常类型
+    output reg[`InstAddrBus]      mem_inst_addr,         //EX阶段的指令的地址
 
     output reg[`InstBus]   mem_inst        //debuger
 );
@@ -79,6 +88,8 @@ module ex_mem (
             mem_cp0_we     <= `WriteDisable;
             mem_cp0_waddr  <= `ZeroWord;
             mem_cp0_wdata  <= `ZeroWord;
+            mem_exception_type  <= `Exc_Default;
+            mem_inst_addr       <= `ZeroWord;
         end else begin
             if (stall[3]==`Stop && stall[4]==`NotStop) begin
                 /*
@@ -107,6 +118,8 @@ module ex_mem (
                 mem_cp0_we     <= `WriteDisable;
                 mem_cp0_waddr  <= `ZeroWord;
                 mem_cp0_wdata  <= `ZeroWord;
+                mem_exception_type  <= `Exc_Default;
+                mem_inst_addr       <= `ZeroWord;
             end else if (stall[3] == `NotStop) begin
                 /*
                  * MEM阶段继续，那其他情况就不用考虑了，直接继续执行进入下个阶段
@@ -127,6 +140,8 @@ module ex_mem (
                 mem_cp0_we     <= ex_cp0_we;
                 mem_cp0_waddr  <= ex_cp0_waddr;
                 mem_cp0_wdata  <= ex_cp0_wdata;     
+                mem_exception_type  <= ex_exception_type;
+                mem_inst_addr       <= ex_inst_addr;
             end else begin
                 /*
                  * 其余情况，保持流水线寄存器的值

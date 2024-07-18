@@ -26,6 +26,9 @@ module ex (
 
     input wire[`RegBus]       cp0_data_i,       //cp0的数据输入
 
+    input wire[`ExceptionTypeBus] exception_type_i,              //异常类型
+    input wire[`InstAddrBus]      inst_addr_i,                   //EX阶段的指令的地址
+
     //输出到流水寄存器
     output reg[`RegAddrBus] waddr_o,       //目标寄存器地址
     output reg              reg_we_o,      //目标寄存器写使能
@@ -54,6 +57,10 @@ module ex (
     output reg[4:0]        cp0_waddr_o,    //写CP0寄存器的地址
     output reg[`RegBus]    cp0_wdata_o,    //写入CP0寄存器的数据
 
+    //传递流水寄存器
+    output reg[`ExceptionTypeBus]  exception_type_o,              //异常类型
+    output wire[`InstAddrBus]      inst_addr_o,                   //EX阶段的指令的地址
+
     /*
      * 对应load/store指令来说，该阶段就是计算有效地址的
      * mem_addr=内存操作地址，是alu运算结果
@@ -72,6 +79,7 @@ module ex (
     assign inst_o = inst_i;
     assign aluop_o = aluop_i;
     assign reg2_data_o = reg2_data_i;
+    assign inst_addr_o = inst_addr_i;
 
     /* 计算：逻辑、位移、移动运算结果 */
     always @(*) begin
