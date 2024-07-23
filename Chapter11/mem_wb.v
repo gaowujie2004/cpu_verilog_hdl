@@ -23,11 +23,8 @@ module mem_wb (
     input wire             mem_cp0_we,     //写使能
     input wire[4:0]        mem_cp0_waddr,  //写CP0寄存器的地址
     input wire[`RegBus]    mem_cp0_wdata,  //写入CP0寄存器的数据
-
     /*异常相关*/
     input wire                    flush,                    //响应中断
-    input wire[`ExceptionTypeBus] mem_exception_type,        //异常类型
-    input wire[`InstAddrBus]      mem_inst_addr,             //EX阶段的指令的地址
 
     output reg[`RegAddrBus] wb_waddr,
     output reg              wb_reg_we,
@@ -45,11 +42,6 @@ module mem_wb (
     output reg              wb_cp0_we,      //写使能
     output reg[4:0]         wb_cp0_waddr,   //写CP0寄存器的地址
     output reg[`RegBus]     wb_cp0_wdata,   //写入CP0寄存器的数据
-
-    /*异常相关*/
-    output reg[`ExceptionTypeBus] wb_exception_type,    //异常类型
-    output reg[`InstAddrBus]      wb_inst_addr,         //MEM阶段的指令的地址
-
     output reg[`InstBus]    wb_inst        //debuger
 );
     always @(posedge clk) begin
@@ -72,9 +64,6 @@ module mem_wb (
             wb_cp0_wdata  <= `ZeroWord;
 
             wb_inst    <= `ZeroWord;
-
-            wb_exception_type  <= `Exc_Default;
-            wb_inst_addr       <= `ZeroWord;
         end else begin
             if (flush==`True_v) begin
                 wb_waddr  <= `NOPRegAddr;
@@ -94,9 +83,6 @@ module mem_wb (
                 wb_cp0_wdata  <= `ZeroWord;
 
                 wb_inst    <= `ZeroWord;
-
-                wb_exception_type  <= `Exc_Default;
-                wb_inst_addr       <= `ZeroWord;
             end else if (stall[4]==`Stop && stall[5]==`NotStop) begin
                 /*
                  * MEM阶段暂停，⽽WB阶段继续，所以使⽤NOP作为下⼀个周期进⼊WB阶段的指令
@@ -120,10 +106,7 @@ module mem_wb (
                 wb_cp0_waddr  <= `ZeroWord;
                 wb_cp0_wdata  <= `ZeroWord;
 
-                wb_inst    <= mem_inst;         //debuger   
-
-                wb_exception_type  <= `Exc_Default;
-                wb_inst_addr       <= `ZeroWord;     
+                wb_inst    <= mem_inst;         //debuger      
             end else if (stall[4] == `NotStop) begin
                 /*
                  * MEM阶段继续，那其他情况就不用考虑了，直接继续执行进入下个阶段
@@ -144,10 +127,7 @@ module mem_wb (
                 wb_cp0_waddr  <= mem_cp0_waddr;
                 wb_cp0_wdata  <= mem_cp0_wdata;
 
-                wb_inst    <= mem_inst;     
-
-                wb_exception_type  <= mem_exception_type;
-                wb_inst_addr       <= mem_inst_addr;           
+                wb_inst    <= mem_inst;             
             end else begin
                 /*
                  * 只考虑与MEM、WB相关的阶段，其他阶段不考虑，
