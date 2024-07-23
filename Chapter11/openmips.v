@@ -27,7 +27,12 @@ module openmips (
     // pipeline_ctrl部件
     wire stallreq_from_id;
     wire stallreq_from_ex;
+    wire[`ExceptionTypeBus] ctrl_exception_i;
+    wire[`RegBus]           ctrl_cp0_epc_i;
     wire[`StallBus] stall;
+    wire            flush;
+    wire[`InstAddrBus] exec_handler_addr;
+
     wire[`InstAddrBus] branch_target_address_o;
     wire               branch_flag_o;
     // IF阶段
@@ -38,6 +43,9 @@ module openmips (
         .stall(stall),
         .branch_flag_i(branch_flag_o),
         .branch_target_address_i(branch_target_address_o),
+        /*异常相关*/
+        .flush(flush),
+        .exception_handle_addr_i(exec_handler_addr),
         
         .pc(if_pc),
         .ce(rom_ce_o)
@@ -54,19 +62,13 @@ module openmips (
         .if_pc(if_pc),
         .if_inst(rom_data_i), 
         .stall(stall),
+        .flush(flush),
 
         //输出
         .id_pc(id_pc_i), 
         .id_inst(id_inst_i)
     );
 
-    pipeline_ctrl pipeline_ctrl_0(
-        .rst(rst),
-        .stallreq_from_id(stallreq_from_id),
-        .stallreq_from_ex(stallreq_from_ex),
-
-        .stall(stall)
-    );
 
     // ID阶段      
     wire[`AluSelBus] id_alusel_o;  //送入流水寄存器
@@ -101,6 +103,9 @@ module openmips (
     wire[`InstBus]    id_inst_o;
     wire              id_ex_is_in_delayslot_o;
 
+    wire[`ExceptionTypeBus]    id_exception_type_o;   //异常相关 
+    wire[`InstAddrBus]         id_inst_addr_o;    
+
     id id_0(
         .rst(rst), .pc_i(id_pc_i), .inst_i(id_inst_i),
         // regfile模块的输出
@@ -130,7 +135,10 @@ module openmips (
         .inst_o(id_inst_o),
         //反馈pc
         .branch_flag_o(branch_flag_o),
-        .branch_target_o(branch_target_address_o)
+        .branch_target_o(branch_target_address_o),
+        //异常相关
+        .exception_type_o(id_exception_type_o),
+        .inst_addr_o(id_inst_addr_o)
     );
 
     // refile
@@ -163,6 +171,8 @@ module openmips (
     wire              ex_is_indelayslot_i; 
     wire[`InstAddrBus]ex_link_addr_i;
     wire[`RegBus]     ex_reg2_data_i;
+    wire[`ExceptionTypeBus]   ex_exception_type_i;   //异常相关 
+    wire[`InstAddrBus]         ex_inst_addr_i;    
 
     id_ex id_ex_0(
         .rst(rst), .clk(clk), .id_inst(id_inst_o),
@@ -173,6 +183,10 @@ module openmips (
         .id_is_in_delayslot(id_is_in_delayslot_o), .id_link_address(id_link_addr_o),
         .id_next_inst_in_delayslot(id_next_inst_in_delayslot_o),
         .id_reg2_data(id_reg2_data_o),
+        /*异常相关*/
+        .flush(flush),
+        .id_exception_type(id_exception_type_o),
+        .id_inst_addr(id_inst_addr_o),
         
         .ex_alusel(ex_alusel_i), .ex_aluop(ex_aluop_i), 
         .ex_op1_data(ex_op1_data_i), .ex_op2_data(ex_op2_data_i),
@@ -180,7 +194,9 @@ module openmips (
         .ex_inst(ex_inst_i),
         .ex_is_indelayslot(ex_is_indelayslot_i), .ex_link_address(ex_link_addr_i),
         .is_in_delayslot(id_ex_is_in_delayslot_o),
-        .ex_reg2_data(ex_reg2_data_i)
+        .ex_reg2_data(ex_reg2_data_i),
+        .ex_exception_type(ex_exception_type_i),
+        .ex_inst_addr(ex_inst_addr_i)
     );
 
 
@@ -215,6 +231,11 @@ module openmips (
     wire             ex_cp0_we_o;       //写使能
     wire[4:0]        ex_cp0_waddr_o;    //写CP0寄存器的地址
     wire[`RegBus]    ex_cp0_wdata_o;    //写入CP0寄存器的数据
+    /*异常相关*/
+    wire[`ExceptionTypeBus]   ex_exception_type_o;
+    wire[`InstAddrBus]        ex_inst_addr_o; 
+    wire                      ex_is_in_delayslot_o;
+    
     ex ex_0(
         .rst(rst), .inst_i(ex_inst_i),
         .alusel_i(ex_alusel_i), .aluop_i(ex_aluop_i),
@@ -227,6 +248,8 @@ module openmips (
         .is_in_delayslot_i(ex_is_indelayslot_i),
         .reg2_data_i(ex_reg2_data_i),
         .cp0_data_i(ex_cp0_data_i),
+        .exception_type_i(ex_exception_type_i),
+        .inst_addr_i(ex_inst_addr_i),
 
         /*写regfile相关信号*/
         .waddr_o(ex_waddr_o), .reg_we_o(ex_reg_we_o), .alu_res_o(ex_alu_res_o),
@@ -249,7 +272,11 @@ module openmips (
         .cp0_raddr_o(ex_cp0_raddr_o),
         .cp0_we_o(ex_cp0_we_o),
         .cp0_waddr_o(ex_cp0_waddr_o),
-        .cp0_wdata_o(ex_cp0_wdata_o)
+        .cp0_wdata_o(ex_cp0_wdata_o),
+        /*异常*/
+        .exception_type_o(ex_exception_type_o),
+        .inst_addr_o(ex_inst_addr_o),
+        .is_in_delayslot_o(ex_is_in_delayslot_o)
     );
     div div_0(
     	.clk(clk), .rst(rst),
@@ -280,6 +307,10 @@ module openmips (
     wire               mem_cp0_we_i;       //写使能
     wire[4:0]          mem_cp0_waddr_i;    //写CP0寄存器的地址
     wire[`RegBus]      mem_cp0_wdata_i;    //写入CP0寄存器的数据
+    /*异常相关*/
+    wire[`ExceptionTypeBus]   mem_exception_type_i;
+    wire[`InstAddrBus]        mem_inst_addr_i; 
+    wire                      mem_is_in_delayslot_i;
     ex_mem ex_mem_0(
         .rst(rst), .clk(clk), 
         .stall(stall),
@@ -292,6 +323,11 @@ module openmips (
         .ex_cp0_we(ex_cp0_we_o),
         .ex_cp0_waddr(ex_cp0_waddr_o),
         .ex_cp0_wdata(ex_cp0_wdata_o),
+        /*exec*/
+        .flush(flush),
+        .ex_exception_type(ex_exception_type_o),
+        .ex_inst_addr(ex_inst_addr_o),
+        .ex_is_in_delayslot(ex_is_in_delayslot_o),
 
         .mem_waddr(mem_waddr_i), .mem_reg_we(mem_reg_we_i), .mem_alu_res(mem_alu_res_i),
         .mem_hi_we(mem_hi_we_i), .mem_lo_we(mem_lo_we_i), .mem_hi(mem_hi_i), .mem_lo(mem_lo_i),
@@ -303,7 +339,12 @@ module openmips (
         /*cp0 mt(f)c0*/
         .mem_cp0_we(mem_cp0_we_i),
         .mem_cp0_waddr(mem_cp0_waddr_i),
-        .mem_cp0_wdata(mem_cp0_wdata_i)
+        .mem_cp0_wdata(mem_cp0_wdata_i),
+        /*异常*/
+        .mem_exception_type(mem_exception_type_i),
+        .mem_inst_addr(mem_inst_addr_i),
+        .mem_is_in_delayslot(mem_is_in_delayslot_i)
+
     );
 
     // MEM阶段
@@ -319,6 +360,12 @@ module openmips (
     wire               mem_cp0_we_o;       //写使能
     wire[4:0]          mem_cp0_waddr_o;    //写CP0寄存器的地址
     wire[`RegBus]      mem_cp0_wdata_o;    //写入CP0寄存器的数据
+    /*exec*/
+    wire[`RegBus]      cp0_status_o;
+    wire[`RegBus]      cp0_cause_o;
+    wire[`ExceptionTypeBus]   mem_exception_type_o;
+    wire[`InstAddrBus]        mem_inst_addr_o; 
+    wire                      mem_is_in_delayslot_o;
 
     mem mem_0(
         .rst(rst), 
@@ -334,6 +381,12 @@ module openmips (
         .cp0_we_i(mem_cp0_we_i),
         .cp0_waddr_i(mem_cp0_waddr_i),
         .cp0_wdata_i(mem_cp0_wdata_i),
+        /*exec*/
+        .exception_type_i(mem_exception_type_i),
+        .inst_addr_i(mem_inst_addr_i),
+        .is_in_delayslot_i(mem_is_in_delayslot_i),
+        .cp0_status_i(cp0_status_o),
+        .cp0_cause_i(cp0_cause_o),
 
         .waddr_o(mem_waddr_o), .reg_we_o(mem_reg_we_o),  .wdata_o(mem_alu_res_o),
         .hi_we_o(mem_hi_we_o), .lo_we_o(mem_lo_we_o), .hi_o(mem_hi_o), .lo_o(mem_lo_o),
@@ -350,7 +403,11 @@ module openmips (
         /*cp0 mf(t)c0*/
         .cp0_we_o(mem_cp0_we_o),
         .cp0_waddr_o(mem_cp0_waddr_o),
-        .cp0_wdata_o(mem_cp0_wdata_o)
+        .cp0_wdata_o(mem_cp0_wdata_o),
+        /*exec*/
+        .exception_type_o(mem_exception_type_o),
+        .inst_addr_o(mem_inst_addr_o),
+        .is_in_delayslot_o(mem_is_in_delayslot_o)
     );
 
     // MEM_WB寄存器
@@ -377,8 +434,10 @@ module openmips (
         .mem_cp0_we(mem_cp0_we_o),
         .mem_cp0_waddr(mem_cp0_waddr_o),
         .mem_cp0_wdata(mem_cp0_wdata_o),
+        /*exec*/
+        .flush(flush),
 
-        //输出
+
         .wb_waddr(wb_waddr_o), .wb_reg_we(wb_we_o), .wb_wdata(wb_wdata_o),   //送入regfile
         .wb_hi_we(wb_hi_we_i), .wb_lo_we(wb_lo_we_i), .wb_hi(wb_hi_i), .wb_lo(wb_lo_i), //送入hilo
         .wb_inst(wb_inst_i), //送入regfile、hilo
@@ -401,7 +460,7 @@ module openmips (
     llbit llbit_0(
     	.clk        (clk),
         .rst        (rst),
-        .flush      (1'b0),
+        .flush      (flush),
         .wb_we_i    (wb_llbit_we),
         .wb_llbit_i (wb_llbit_value),
         .llbit_o    (llbit_o)
@@ -418,9 +477,27 @@ module openmips (
         .wb_wdata_i      (wb_cp0_wdata_i),
         .int_i       (int_i),
         .raddr_i     (ex_cp0_raddr_o),
+        /*异常相关*/
+        .exception_type_i(mem_exception_type_o), 
+        .inst_addr_i(mem_inst_addr_o),          
+        .is_in_delayslot_i(mem_is_in_delayslot_o),     
+
 
         .data_o      (ex_cp0_data_i),
         .timer_int_o(timer_int_o)
+    );
+
+    pipeline_ctrl pipeline_ctrl_0(
+        .rst(rst),
+        .stallreq_from_id(stallreq_from_id),
+        .stallreq_from_ex(stallreq_from_ex),
+        /*异常相关*/
+        .cp0_epc_i(),       // TODO: 待解决的问题
+        .exception_i(mem_exception_type_o),
+
+        .stall(stall),
+        .flush(flush),
+        .exec_handler_addr(exec_handler_addr)
     );
     
     
