@@ -32,7 +32,6 @@ module mem (
     input wire                    is_in_delayslot_i,             //EX阶段的指令是否为延迟槽指令
     input wire[`RegBus]           cp0_status_i,
     input wire[`RegBus]           cp0_cause_i,
-    input wire[`RegBus]           cp0_epc_i,
 
     //输入流水寄存器
     output reg[`RegAddrBus] waddr_o,     //目的寄存器地址
@@ -64,13 +63,11 @@ module mem (
     output reg[`ExceptionTypeBus]  exception_type_o,              //最终的异常类型
     output wire[`InstAddrBus]      inst_addr_o,                   //当前阶段的指令的地址
     output wire                    is_in_delayslot_o,             //EX阶段的指令是否为延迟槽指令
-    output wire[`RegBus]           epc_o,                         //中断返回地址
 
     output reg[`InstBus]  inst_o         //debuger
 );
     assign inst_addr_o = inst_addr_i;
     assign is_in_delayslot_o = is_in_delayslot_i;
-    assign epc_o = cp0_epc_i;
 
     wire[1:0] addr_lowest_two_bit = mem_addr_i[1:0];
 	reg   mem_we;
