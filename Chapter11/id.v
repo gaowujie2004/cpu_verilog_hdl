@@ -579,7 +579,7 @@ module id (
                                 reg2_read_o <= `ReadEnable;
                                 reg2_read_o <= rt;  
                                 //syscall
-                                is_syscall = `True_v;
+                                is_syscall  <= `True_v;
                             end
                             default: begin
                                 instvalid <= `False_v;
