@@ -363,6 +363,7 @@ module openmips (
     /*exec*/
     wire[`RegBus]      cp0_status_o;
     wire[`RegBus]      cp0_cause_o;
+    wire[`RegBus]      cp0_epc_o;
     wire[`ExceptionTypeBus]   mem_exception_type_o;
     wire[`InstAddrBus]        mem_inst_addr_o; 
     wire                      mem_is_in_delayslot_o;
@@ -465,7 +466,9 @@ module openmips (
         .wb_llbit_i (wb_llbit_value),
         .llbit_o    (llbit_o)
     );
- 
+    
+    wire[`RegBus] status_o;
+    wire[`RegBus] cause_o;
     cp0_reg cp0_reg_0(
     	.clk         (clk),
         .rst         (rst),
@@ -484,7 +487,9 @@ module openmips (
 
 
         .data_o      (ex_cp0_data_i),
-        .timer_int_o(timer_int_o)
+        .timer_int_o(timer_int_o),
+        .status_o(cp0_status_o),
+        .cause_o(cp0_cause_o)
     );
 
     pipeline_ctrl pipeline_ctrl_0(
@@ -492,7 +497,7 @@ module openmips (
         .stallreq_from_id(stallreq_from_id),
         .stallreq_from_ex(stallreq_from_ex),
         /*异常相关*/
-        .cp0_epc_i(),       // TODO: 待解决的问题
+        .cp0_epc_i(cp0_epc_o),
         .exception_i(mem_exception_type_o),
 
         .stall(stall),
