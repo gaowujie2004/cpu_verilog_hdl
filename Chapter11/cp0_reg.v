@@ -19,9 +19,6 @@ module cp0_reg (
     input wire[`InstAddrBus]         inst_addr_i,           //当前阶段的指令的地址
     
 
-    
-
-
     output reg          timer_int_o, //定时中断触发
     output reg[`RegBus] data_o,      //读取的值
 
