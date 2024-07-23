@@ -28,7 +28,9 @@ module llbit (
             解决：数据转发(数据前推)，和Regfile、HiLo模块一样的思路。
                   我们设计的是在MEM Stage读llbit，在WB Stage写llbit，故而MEM之前的阶段都不需要考虑数据转发(数据前推)
         */
-        if (wb_we_i == `WriteEnable) begin
+        if (flush == 1'b1) begin
+            llbit_o = 1'b0;
+        end else if (wb_we_i == `WriteEnable) begin
             llbit_o = wb_llbit_i;
         end else begin
             llbit_o = llbit;
