@@ -497,11 +497,11 @@ module ex (
     wire op1_lt_op2 =  ((aluop_i == `ALU_SLT_OP) ||
                         (aluop_i == `ALU_TLT_OP) ||
                         (aluop_i == `ALU_TGE_OP) ) ?                   //判断有无符号
-        ((op1_data_i[31] && !op2_data_i[31]) ||                        //-、+
-        (!op1_data_i[31] && !op2_data_i[31] && result_sum[31])||       //+、+
-        (op1_data_i[31]  && op2_data_i[31]  && result_sum[31]))        //-、-
-        : 
-        (op1_data_i < op2_data_i);
+                            ((op1_data_i[31] && !op2_data_i[31]) ||                        //-、+
+                            (!op1_data_i[31] && !op2_data_i[31] && result_sum[31])||       //+、+
+                            (op1_data_i[31]  && op2_data_i[31]  && result_sum[31]))        //-、-
+                            : 
+                            (op1_data_i < op2_data_i);
     wire op1_eq_op2 = op1_data_i == op2_data_i;
     /*
      * Think: 为什么不直接判断result_sum[31]==1 ？因为可能溢出了，比如127-(-1)，符号位是1，
