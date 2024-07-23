@@ -13,6 +13,12 @@ module cp0_reg (
 
     input wire[5:0]     int_i,   //6个外部硬件中断源
     input wire[4:0]     raddr_i, //读CP0寄存器的地址
+    /*异常相关*/
+    input wire[`ExceptionTypeBus]    exception_type_i,      //最终的异常类型，mem阶段定义
+    input wire                       is_in_delayslot_i,     //MEM阶段的指令是否为延迟槽指令
+    input wire[`InstAddrBus]         inst_addr_i,           //当前阶段的指令的地址
+    
+
     
 
 
@@ -123,6 +129,84 @@ module cp0_reg (
                     end
                 endcase
             end
+        end
+    end
+
+    always @(*) begin
+        if (rst == `RstDisable) begin
+            case (exception_type_i)
+                `Exc_Interrupt: begin
+                    if (is_in_delayslot_i) begin
+                        epc_o       <= inst_addr_i - 4;   //为什么呢？书中将的很清楚
+                        cause_o[31] <= `True_v;           //是否是延迟槽指令
+                    end else begin
+                        epc_o       <= inst_addr_i;
+                        cause_o[31] <= `False_v;        
+                    end
+                    cause_o[6:2] <= `ExcCode_Int;   //ExcCode field
+                    status_o[1]  <= 1'b1;           //Exc field是否异常
+                end
+
+                `Exc_Syscall: begin
+                    if (status_o[1] == 1'b0) begin
+                        if (is_in_delayslot_i) begin
+                            epc_o       <= inst_addr_i - 4;
+                            cause_o[31] <= `True_v;
+                        end else begin
+                            epc_o       <= inst_addr_i;
+                            cause_o[31] <= `False_v;        
+                        end
+                    end
+                    cause_o[6:2] <= `ExcCode_Syscall;
+                    status_o[1]  <= 1'b1;             
+                end
+
+                `Exc_InvalidInst: begin
+                    if (status_o[1] == 1'b0) begin
+                        if (is_in_delayslot_i) begin
+                            epc_o       <= inst_addr_i - 4;
+                            cause_o[31] <= `True_v;
+                        end else begin
+                            epc_o       <= inst_addr_i;
+                            cause_o[31] <= `False_v;        
+                        end
+                    end
+                    cause_o[6:2] <= `ExcCode_InvalidInst;
+                    status_o[1]  <= 1'b1;
+                end
+
+                `Exc_Trap: begin
+                    if (status_o[1] == 1'b0) begin
+                        if (is_in_delayslot_i) begin
+                            epc_o       <= inst_addr_i - 4;
+                            cause_o[31] <= `True_v;
+                        end else begin
+                            epc_o       <= inst_addr_i;
+                            cause_o[31] <= `False_v;        
+                        end
+                    end
+                    cause_o[6:2] <= `ExcCode_Trap;
+                    status_o[1]  <= 1'b1;
+                end
+
+                `Exc_Overflow: begin
+                    if (status_o[1] == 1'b0) begin
+                        if (is_in_delayslot_i) begin
+                            epc_o       <= inst_addr_i - 4;
+                            cause_o[31] <= `True_v;
+                        end else begin
+                            epc_o       <= inst_addr_i;
+                            cause_o[31] <= `False_v;        
+                        end
+                    end
+                    cause_o[6:2] <= `ExcCode_Overflow;
+                    status_o[1]  <= 1'b1;
+                end
+
+                `Exc_Eret: begin
+                    status_o[1]   <=  1'b0;
+                end
+            endcase
         end
     end
     

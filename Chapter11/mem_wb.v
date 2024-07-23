@@ -76,7 +76,28 @@ module mem_wb (
             wb_exception_type  <= `Exc_Default;
             wb_inst_addr       <= `ZeroWord;
         end else begin
-            if (stall[4]==`Stop && stall[5]==`NotStop) begin
+            if (flush==`True_v) begin
+                wb_waddr  <= `NOPRegAddr;
+                wb_reg_we <= `WriteDisable;
+                wb_wdata  <= `ZeroWord;
+
+                wb_hi_we   <= `WriteDisable;
+                wb_lo_we   <= `WriteDisable;
+                wb_hi      <= `ZeroWord;
+                wb_lo      <= `ZeroWord;
+
+                wb_llbit_we    <= `WriteDisable;
+                wb_llbit_value <= 1'b0;
+
+                wb_cp0_we     <= `WriteDisable;
+                wb_cp0_waddr  <= `ZeroWord;
+                wb_cp0_wdata  <= `ZeroWord;
+
+                wb_inst    <= `ZeroWord;
+
+                wb_exception_type  <= `Exc_Default;
+                wb_inst_addr       <= `ZeroWord;
+            end else if (stall[4]==`Stop && stall[5]==`NotStop) begin
                 /*
                  * MEM阶段暂停，⽽WB阶段继续，所以使⽤NOP作为下⼀个周期进⼊WB阶段的指令
                  * MEM阶段结束，下一个周期一到：

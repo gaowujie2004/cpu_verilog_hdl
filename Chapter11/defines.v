@@ -122,9 +122,27 @@
 `define RT_BLTZ    5'b00000
 `define RT_BLTZAL  5'b10000
 
+   
+`define FUNC_TEQ  6'b110100
+`define FUNC_TGE  6'b110000
+`define FUNC_TGEU 6'b110001
+`define FUNC_TLT  6'b110010
+`define FUNC_TLTU 6'b110011
+`define FUNC_TNE  6'b110110
+
+`define RT_TEQI  5'b01100
+`define RT_TGEI  5'b01000
+`define RT_TGEIU 5'b01001
+`define RT_TLTI  5'b01010
+`define RT_TLTIU 5'b01011
+`define RT_TNEI  5'b01110
+
+`define FUNC_SYSCALL 6'b001100
+
 `define OP_SPECIAL_INST  6'b000000
 `define OP_SPECIAL2_INST 6'b011100
 `define OP_REGIMM_INST   6'b000001
+`define INST_ERET        32'b01000010000000000000000000011000
 
 
 // AluOp
@@ -197,6 +215,17 @@
 `define ALU_MFC0_OP     8'b01011101
 `define ALU_MTC0_OP     8'b01100000
 
+`define ALU_TEQ_OP      8'b00110100
+`define ALU_TGE_OP      8'b00110000
+`define ALU_TGEU_OP     8'b00110001
+`define ALU_TLT_OP      8'b00110010
+`define ALU_TLTU_OP     8'b00110011
+`define ALU_TNE_OP      8'b00110110
+
+   
+`define ALU_ERET_OP     8'b01101011
+
+`define ALU_SYSCALL_OP 8'b00001100
 
 `define ALU_NOP_OP      8'b00000000
 // AluSel
@@ -260,14 +289,19 @@
 `define InterruptNotAssert 1'b0
 
 //异常相关
-`define ExceptionTypeBus    2:0
+`define ExceptionTypeBus    31:0
 
-`define Exc_Default     3'b000  
-`define Exc_InvalidInst 3'b001
-`define Exc_Syscall     3'b010
-`define Exc_Eret        3'b011
+`define Exc_Default     32'b0
+`define Exc_Interrupt   32'h0000_0001
+`define Exc_Syscall     32'h0000_0008
+`define Exc_InvalidInst 32'h0000_000a
+`define Exc_Trap        32'h0000_000d
+`define Exc_Overflow    32'h0000_000c
+`define Exc_Eret        32'h0000_000e
 
-`define Exc_Trap        3'b100
-`define Exc_Overflow    3'b101
+`define ExcCode_Int          5'd0
+`define ExcCode_Syscall      5'd8
+`define ExcCode_InvalidInst  5'd10
+`define ExcCode_Overflow 5'd12
+`define ExcCode_Trap     5'd13
 
-`define Exc_Interrupt   3'b110

@@ -58,8 +58,9 @@ module ex (
     output reg[`RegBus]    cp0_wdata_o,    //写入CP0寄存器的数据
 
     //传递流水寄存器
-    output reg[`ExceptionTypeBus]  exception_type_o,              //异常类型
+    output wire[`ExceptionTypeBus]  exception_type_o,              //异常类型
     output wire[`InstAddrBus]      inst_addr_o,                   //EX阶段的指令的地址
+    output wire                    is_in_delayslot_o,             //EX阶段的指令是否为延迟槽指令
 
     /*
      * 对应load/store指令来说，该阶段就是计算有效地址的
@@ -80,6 +81,8 @@ module ex (
     assign aluop_o = aluop_i;
     assign reg2_data_o = reg2_data_i;
     assign inst_addr_o = inst_addr_i;
+    assign is_in_delayslot_o = is_in_delayslot_i;
+
 
     /* 计算：逻辑、位移、移动运算结果 */
     always @(*) begin
@@ -478,4 +481,60 @@ module ex (
             stallreq <= (stallreq_from_madd_msub || stallreq_from_div);
         end
     end
+
+
+    reg trapassert; // 是否有⾃陷异常
+    reg ovassert;  // 表示是否有溢出异常
+    wire[`RegBus] op2_i_mux =  ((aluop_i == `ALU_SUB_OP) ||
+                                (aluop_i == `ALU_SUBU_OP)||
+                                (aluop_i == `ALU_SLT_OP) ||
+                                (aluop_i == `ALU_TLT_OP) ||
+                                (aluop_i == `ALU_TGE_OP)) ? 
+                                (~op2_data_i)+1 
+                                : op2_data_i;
+
+    wire[`RegBus] result_sum = op1_data_i + op2_i_mux;
+    wire op1_lt_op2 =  ((aluop_i == `ALU_SLT_OP) ||
+                        (aluop_i == `ALU_TLT_OP) ||
+                        (aluop_i == `ALU_TGE_OP) ) ?                   //判断有无符号
+        ((op1_data_i[31] && !op2_data_i[31]) ||                        //-、+
+        (!op1_data_i[31] && !op2_data_i[31] && result_sum[31])||       //+、+
+        (op1_data_i[31]  && op2_data_i[31]  && result_sum[31]))        //-、-
+        : 
+        (op1_data_i < op2_data_i);
+    wire op1_eq_op2 = op1_data_i == op2_data_i;
+    /*
+     * Think: 为什么不直接判断result_sum[31]==1 ？因为可能溢出了，比如127-(-1)，符号位是1，
+     * 说明是负数，很显然溢出时的判断是错的
+    */
+
+    /*
+     * 计算自陷
+    */
+    always @(*) begin
+        trapassert <= `False_v;
+        case (aluop_i)
+            `ALU_TEQ_OP: begin
+                trapassert <= op1_eq_op2;
+            end
+            `ALU_TGE_OP, `ALU_TGEU_OP: begin
+                trapassert <= ~op1_lt_op2;
+            end
+            `ALU_TLT_OP,`ALU_TLTU_OP: begin
+                trapassert <= op1_lt_op2;
+            end
+            `ALU_TNE_OP: begin
+                trapassert <= !op1_eq_op2;
+            end
+        endcase
+    end
+
+    /*
+     * 溢出中断
+    */
+    always @(*) begin
+        ovassert <= (aluop_i == `ALU_ADD_OP || aluop_i == `ALU_SUB_OP ) && of;
+    end
+    assign exception_type_o = { exception_type_i[31:12], ovassert, trapassert ,exception_type_i[9:8], 8'b0};
+
 endmodule

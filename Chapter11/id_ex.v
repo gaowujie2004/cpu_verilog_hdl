@@ -42,7 +42,7 @@ module id_ex (
 
     always @(posedge clk) begin
         // 同步复位
-        if (rst == `RstEnable || flush == `True_v) begin
+        if (rst == `RstEnable) begin
 			ex_alusel <= `ALU_RES_NOP;
             ex_aluop <= `ALU_NOP_OP;
 			ex_op1_data <= `ZeroWord;
@@ -57,7 +57,21 @@ module id_ex (
             ex_exception_type  <= `Exc_Default;
             ex_inst_addr       <= `ZeroWord;
         end else begin
-            if (stall[2]==`Stop && stall[3]==`NotStop) begin
+            if (flush == `True_v) begin
+                ex_alusel <= `ALU_RES_NOP;
+                ex_aluop <= `ALU_NOP_OP;
+                ex_op1_data <= `ZeroWord;
+                ex_op2_data <= `ZeroWord;
+                ex_waddr  <= `NOPRegAddr;
+                ex_reg_we <= `WriteDisable;
+                ex_inst   <= `ZeroWord;
+                ex_is_indelayslot  <= `False_v;
+                ex_link_address    <= `ZeroWord;
+                is_in_delayslot    <= `False_v;
+                ex_reg2_data       <= `ZeroWord;
+                ex_exception_type  <= `Exc_Default;
+                ex_inst_addr       <= `ZeroWord;
+            end else if (stall[2]==`Stop && stall[3]==`NotStop) begin
                 //气泡
                 ex_alusel <= `ALU_RES_NOP;
                 ex_aluop  <= `ALU_NOP_OP;

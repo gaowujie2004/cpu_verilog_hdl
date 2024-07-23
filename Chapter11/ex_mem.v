@@ -39,6 +39,8 @@ module ex_mem (
     input wire                    flush,                    //响应中断
     input wire[`ExceptionTypeBus] ex_exception_type,        //异常类型
     input wire[`InstAddrBus]      ex_inst_addr,             //EX阶段的指令的地址
+    input wire                    ex_is_in_delayslot,       //EX阶段的指令是否为延迟槽指令
+
 
     output reg[`RegAddrBus] mem_waddr,       
     output reg              mem_reg_we,      
@@ -64,6 +66,7 @@ module ex_mem (
     /*异常相关*/
     output reg[`ExceptionTypeBus] mem_exception_type,    //异常类型
     output reg[`InstAddrBus]      mem_inst_addr,         //EX阶段的指令的地址
+    output reg                    mem_is_in_delayslot,   //EX阶段的指令是否为延迟槽指令
 
     output reg[`InstBus]   mem_inst        //debuger
 );
@@ -90,8 +93,29 @@ module ex_mem (
             mem_cp0_wdata  <= `ZeroWord;
             mem_exception_type  <= `Exc_Default;
             mem_inst_addr       <= `ZeroWord;
+            mem_is_in_delayslot <= `False_v;
         end else begin
-            if (stall[3]==`Stop && stall[4]==`NotStop) begin
+            if (flush == `True_v) begin
+                mem_waddr <= `NOPRegAddr;
+                mem_reg_we <= `WriteDisable;
+                mem_alu_res <= `ZeroWord;
+                mem_hi_we   <= `WriteDisable;
+                mem_lo_we   <= `WriteDisable;
+                mem_hi      <= `ZeroWord;
+                mem_lo      <= `ZeroWord;
+                mem_inst    <= `ZeroWord;
+                cnt_o       <= 2'b00;
+                hilo_temp_o <= {`ZeroWord, `ZeroWord};
+                mem_aluop   <= `ALU_NOP_OP; 
+                mem_mem_addr<= `ZeroWord;
+                mem_reg2_data<= `ZeroWord;
+                mem_cp0_we     <= `WriteDisable;
+                mem_cp0_waddr  <= `ZeroWord;
+                mem_cp0_wdata  <= `ZeroWord;
+                mem_exception_type  <= `Exc_Default;
+                mem_inst_addr       <= `ZeroWord;
+                mem_is_in_delayslot <= `False_v; 
+            end else if (stall[3]==`Stop && stall[4]==`NotStop) begin
                 /*
                  * 气泡NOP
                  * EX阶段暂停，⽽MEM阶段继续，所以使⽤NOP作为下⼀个周期进⼊MEM阶段的指令
@@ -120,6 +144,7 @@ module ex_mem (
                 mem_cp0_wdata  <= `ZeroWord;
                 mem_exception_type  <= `Exc_Default;
                 mem_inst_addr       <= `ZeroWord;
+                mem_is_in_delayslot <= `False_v;
             end else if (stall[3] == `NotStop) begin
                 /*
                  * MEM阶段继续，那其他情况就不用考虑了，直接继续执行进入下个阶段
@@ -142,6 +167,7 @@ module ex_mem (
                 mem_cp0_wdata  <= ex_cp0_wdata;     
                 mem_exception_type  <= ex_exception_type;
                 mem_inst_addr       <= ex_inst_addr;
+                mem_is_in_delayslot <= ex_is_in_delayslot;
             end else begin
                 /*
                  * 其余情况，保持流水线寄存器的值

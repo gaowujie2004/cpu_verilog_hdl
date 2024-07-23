@@ -41,8 +41,8 @@ module id (
     output wire[`RegBus] reg2_data_o,       // reg2，R[rt]的值，store类指令需要
 
     // 异常相关
-    output reg[`ExceptionTypeBus]  exception_type_o,              //异常类型
-    output wire[`InstAddrBus]      inst_addr_o,                   //ID阶段的指令的地址
+    output wire[`ExceptionTypeBus]  exception_type_o,        //异常信息：低8bit留给外部中断，第8bit表示是否是syscall指令引起的，第9bit表示是否是⽆效指令引起的异常
+    output wire[`InstAddrBus]      inst_addr_o,              //ID阶段的指令的地址
     
     //调试目的
     output wire[`InstBus] inst_o
@@ -75,13 +75,16 @@ module id (
                             (ex_aluop_i == `ALU_LL_OP) ||
                             (ex_aluop_i == `ALU_SC_OP)) ? `True_v : `False_v;       //sc会修改R[rt]
 
+    
+    reg is_syscall;
+    reg is_eret;
     /*
      * 信号传递
     */
     assign inst_o = inst_i;
     assign reg2_data_o = reg2_data_i;
     assign inst_addr_o = pc_i;
-    
+    assign exception_type_o = {19'b0, is_eret ,2'b0 ,instvalid ,is_syscall, 8'b0};
 
     /*
      * 第一段：指令译码，各种控制信号
@@ -106,6 +109,10 @@ module id (
             link_addr_o               <= `ZeroWord;
             branch_target_o           <= `ZeroWord;
             branch_flag_o             <= `False_v;
+
+            //异常相关
+            is_syscall <= `False_v;
+            is_eret    <= `False_v;
         end else begin
             // TODO:很重要，case 分支如果未命中，默认逻辑
             wreg_o      <= `WriteDisable;
@@ -120,6 +127,10 @@ module id (
             branch_target_o           <= `ZeroWord;
             branch_flag_o             <= `False_v;
 
+            //异常相关
+            is_syscall <= `False_v;
+            is_eret    <= `False_v;
+			instvalid  <= `False_v;
             case (op)
                 `OP_SPECIAL_INST: begin             // R型指令
                     if (shamt == 5'b0) begin
@@ -477,6 +488,99 @@ module id (
                                 branch_flag_o             <= `True_v;                           
                             end
 
+                            `FUNC_TEQ: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP; 
+                                aluop_o   <= `ALU_SYSCALL_OP;
+                                //write reg
+                                wreg_o    <= `ReadDisable;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadEnable;
+                                reg2_read_o <= rt;
+                            end
+                            `FUNC_TGE: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP; 
+                                aluop_o   <= `ALU_TGE_OP;
+                                //write reg
+                                wreg_o    <= `ReadDisable;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadEnable;
+                                reg2_read_o <= rt;
+                            end
+                            `FUNC_TGEU: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP; 
+                                aluop_o   <= `ALU_TGEU_OP;
+                                //write reg
+                                wreg_o    <= `ReadDisable;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadEnable;
+                                reg2_read_o <= rt;
+                            end
+                            `FUNC_TLT: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP; 
+                                aluop_o   <= `ALU_TLT_OP;
+                                //write reg
+                                wreg_o    <= `ReadDisable;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadEnable;
+                                reg2_read_o <= rt;
+                            end
+                            `FUNC_TLTU: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP; 
+                                aluop_o   <= `ALU_TLTU_OP;
+                                //write reg
+                                wreg_o    <= `ReadDisable;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadEnable;
+                                reg2_read_o <= rt;
+                            end
+                            `FUNC_TNE: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP; 
+                                aluop_o   <= `ALU_TNE_OP;
+                                //write reg
+                                wreg_o    <= `ReadDisable;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadEnable;
+                                reg2_read_o <= rt;
+                            end
+                            `FUNC_SYSCALL: begin
+                                instvalid <= `True_v;
+                                alusel_o  <= `ALU_RES_NOP; 
+                                aluop_o   <= `ALU_SYSCALL_OP;
+                                //write reg
+                                wreg_o    <= `ReadDisable;
+                                //read1 reg
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //read2 reg
+                                reg2_read_o <= `ReadEnable;
+                                reg2_read_o <= rt;  
+                                //syscall
+                                is_syscall = `True_v;
+                            end
                             default: begin
                                 instvalid <= `False_v;
                             end
@@ -712,6 +816,89 @@ module id (
                             branch_target_o          <= branch_addr;
                         end                       
                     end
+
+                    case (rt)
+                        // teqi rs, imm16
+                        //if GPR[rs] = sign_extended(immediate) then trap，
+                        `RT_TEQI: begin
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_TEQ_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                //读1
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2
+                                reg2_read_o <= `ReadDisable;     
+                                imm32 <= signed_imm32;
+                        end
+                        `RT_TGEI: begin
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_TGE_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                //读1
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2
+                                reg2_read_o <= `ReadDisable;     
+                                imm32 <= signed_imm32;
+                        end
+                        `RT_TGEIU: begin
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_TGEU_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                //读1
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2
+                                reg2_read_o <= `ReadDisable;     
+                                imm32 <= signed_imm32;
+                        end
+                        `RT_TLTI: begin
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_TLT_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                //读1
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2
+                                reg2_read_o <= `ReadDisable;     
+                                imm32 <= signed_imm32;
+                        end
+                        `RT_TLTIU: begin
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_TLTU_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                //读1
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2
+                                reg2_read_o <= `ReadDisable;     
+                                imm32 <= signed_imm32;
+                        end
+                        `RT_TNEI: begin
+                                alusel_o  <= `ALU_RES_NOP;
+                                aluop_o   <= `ALU_TNE_OP;
+                                instvalid <= `True_v;
+                                //写控制
+                                wreg_o    <= `WriteDisable;
+                                //读1
+                                reg1_read_o <= `ReadEnable;
+                                reg1_addr_o <= rs;
+                                //读2
+                                reg2_read_o <= `ReadDisable;     
+                                imm32 <= signed_imm32;
+                        end
+                    endcase
                 end
 
                 /*
@@ -1211,6 +1398,18 @@ module id (
                 //read2 reg
                 reg2_read_o <= `ReadEnable;
                 reg2_addr_o <= rt;
+            end else if (inst_i == `INST_ERET) begin
+                instvalid <= `True_v;
+                alusel_o  <= `ALU_RES_NOP;
+                aluop_o   <= `ALU_ERET_OP;
+                //write
+                wreg_o      <= `WriteDisable;
+                //read1 reg
+                reg1_read_o <= `ReadDisable;
+                //read2 reg
+                reg2_read_o <= `ReadDisable;
+                //eret
+                is_eret     <= `True_v;
             end
         end
     end

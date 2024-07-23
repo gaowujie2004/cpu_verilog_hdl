@@ -18,11 +18,14 @@ module if_id (
 
     always @(posedge clk ) begin
         // 同步复位
-        if (rst == `RstEnable || flush == `True_v) begin
+        if (rst == `RstEnable) begin
             id_pc <= `ZeroWord;
             id_inst <= `ZeroWord;   //NOP空指令
         end else begin 
-            if (stall[1]==`Stop && stall[2]==`NotStop) begin
+            if (flush == `True_v) begin
+                id_pc <= `ZeroWord;
+                id_inst <= `ZeroWord;   //NOP空指令
+            end else if (stall[1]==`Stop && stall[2]==`NotStop) begin
                 id_pc   <= `ZeroWord;
                 id_inst <= `ZeroWord;
             end else if (stall[1]==`NotStop) begin

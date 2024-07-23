@@ -29,6 +29,10 @@ module mem (
     /*异常相关*/
     input wire[`ExceptionTypeBus] exception_type_i,              //异常类型
     input wire[`InstAddrBus]      inst_addr_i,                   //EX阶段的指令的地址
+    input wire                    is_in_delayslot_i,             //EX阶段的指令是否为延迟槽指令
+    input wire[`RegBus]           cp0_status_i,
+    input wire[`RegBus]           cp0_cause_i,
+    input wire[`RegBus]           cp0_epc_i,
 
     //输入流水寄存器
     output reg[`RegAddrBus] waddr_o,     //目的寄存器地址
@@ -42,7 +46,7 @@ module mem (
 
     /*输入RAM*/
     output reg[`InstAddrBus]mem_addr_o,
-    output reg              mem_we_o,
+    output wire              mem_we_o,
     output reg[`MemSelBus]  mem_sel_o,   //字节选择，低位sel[0]是指明LSB、高位sel[3]是指明MSB
     output reg[`RegBus]     mem_data_o,  //向RAM输出的写入数据
     output reg              mem_ce_o,    //存储器使能控制
@@ -57,14 +61,19 @@ module mem (
     output reg[`RegBus]     cp0_wdata_o,  //写入CP0寄存器的数据
 
     /*异常相关*/
-    output reg[`ExceptionTypeBus]  exception_type_o,              //异常类型
+    output reg[`ExceptionTypeBus]  exception_type_o,              //最终的异常类型
     output wire[`InstAddrBus]      inst_addr_o,                   //当前阶段的指令的地址
+    output wire                    is_in_delayslot_o,             //EX阶段的指令是否为延迟槽指令
+    output wire[`RegBus]           epc_o,                         //中断返回地址
 
     output reg[`InstBus]  inst_o         //debuger
 );
     assign inst_addr_o = inst_addr_i;
+    assign is_in_delayslot_o = is_in_delayslot_i;
+    assign epc_o = cp0_epc_i;
 
     wire[1:0] addr_lowest_two_bit = mem_addr_i[1:0];
+	reg   mem_we;
     always @(*) begin
         if (rst == `RstEnable) begin
             waddr_o <= `NOPRegAddr;
@@ -79,7 +88,7 @@ module mem (
             inst_o    <= `ZeroWord;
 
             mem_addr_o <= `ZeroWord;
-            mem_we_o   <= `False_v;
+            mem_we   <= `False_v;
             mem_sel_o  <= 4'b0000;
             mem_data_o <= `ZeroWord;
             mem_ce_o   <= `ChipDisable;
@@ -113,7 +122,7 @@ module mem (
             */
             mem_addr_o <= mem_addr_i;
             mem_data_o <= `ZeroWord;
-            mem_we_o   <= `WriteDisable;
+            mem_we   <= `WriteDisable;
             mem_sel_o  <= 4'b0000;
             mem_ce_o   <= `ChipDisable;
             llbit_we_o <= `WriteDisable;
@@ -313,7 +322,7 @@ module mem (
                 `ALU_SB_OP: begin
                     //reg2_data_i低8位写入
                     mem_ce_o   <= `ChipEnable;
-                    mem_we_o   <= `WriteEnable;
+                    mem_we   <= `WriteEnable;
                     mem_data_o <= {{reg2_data_i[7:0]}, {reg2_data_i[7:0]}, {reg2_data_i[7:0]}, {reg2_data_i[7:0]}};
                     case (addr_lowest_two_bit)
                         2'b00: begin
@@ -334,7 +343,7 @@ module mem (
                     if (llbit_i == 1'b1) begin //RMW正常
                         //RAM Write
                         mem_ce_o   <= `ChipEnable;
-                        mem_we_o   <= `WriteEnable;
+                        mem_we   <= `WriteEnable;
                         mem_sel_o  <= 4'b1111;
                         mem_data_o <= reg2_data_i;
                         //R[rt] write
@@ -349,7 +358,7 @@ module mem (
                 `ALU_SH_OP: begin       //two byte align
                     //reg2_data_i低16位写入
                     mem_ce_o   <= `ChipEnable;
-                    mem_we_o   <= `WriteEnable;
+                    mem_we   <= `WriteEnable;
                     mem_data_o <= {reg2_data_i[15:0], reg2_data_i[15:0]};
                     case (addr_lowest_two_bit)
                         2'b00: begin
@@ -363,7 +372,7 @@ module mem (
                 `ALU_SW_OP: begin
                     //reg2_data_i直接写入
                     mem_ce_o   <= `ChipEnable;
-                    mem_we_o   <= `WriteEnable;
+                    mem_we   <= `WriteEnable;
                     mem_data_o <= reg2_data_i;
                     case (addr_lowest_two_bit)
                         2'b00: begin
@@ -378,7 +387,7 @@ module mem (
                 */
                 `ALU_SWL_OP: begin                  //可不对齐
                     mem_ce_o   <= `ChipEnable;
-                    mem_we_o   <= `WriteEnable;
+                    mem_we   <= `WriteEnable;
                     mem_addr_o <= {mem_addr_i[31:2], 2'b00}; //不对齐也可以
                     case (addr_lowest_two_bit)
                         /*将R[rt]最⾼4-0=4个字节存储到地址storeaddr处*/
@@ -421,7 +430,7 @@ module mem (
                 */
                 `ALU_SWR_OP: begin
                     mem_ce_o   <= `ChipEnable;
-                    mem_we_o   <= `WriteEnable;
+                    mem_we   <= `WriteEnable;
                     mem_addr_o <= {mem_addr_i[31:2], 2'b00};
                     case (addr_lowest_two_bit)
                         /*
@@ -465,4 +474,41 @@ module mem (
 
         end
     end
+    
+    /*
+     * 异常综合处理
+    */
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            exception_type_o <= `ZeroWord;
+        end else begin
+            exception_type_o <= `ZeroWord;
+            // TODO：极大概论存在问题，因为第一条指令地址就是0啊！
+            if (inst_addr_i != `ZeroWord) begin
+                if ( (cp0_cause_i[15:8] & (cp0_status_i[15:8])) != 8'b0 && cp0_status_i[1]==`False_v && cp0_status_i[0]==`True_v) begin  //外部中断
+                    /*
+                     * cause[15:0]外部中断、status[15:8]中断屏蔽位
+                     * Status[0]：表示是否使能中断（Interrupt Enable），这是全局中断使能标志位。为1表示中断使能，为0表示中断禁⽌
+                     * Status[1]：表示是否处于异常级（Exception Level），当异常发⽣时，会设置本字段为1，表示处理器处于异常级，此时禁⽌中断。
+                    */
+                    exception_type_o <= `Exc_Interrupt;  //外部中断
+                end else if (exception_type_i[8]) begin  //syscall inst
+                    exception_type_o <= `Exc_Syscall;
+                end else if (exception_type_i[9]) begin  //invalid inst
+                    exception_type_o <= `Exc_InvalidInst;
+                end else if (exception_type_i[10]) begin //trap
+                    exception_type_o <= `Exc_Trap;
+                end else if (exception_type_i[11]) begin //overflow exec
+                    exception_type_o <= `Exc_Overflow;
+                end else if (exception_type_i[12]) begin //eret inst
+                    exception_type_o <= `Exc_Eret;
+                end
+            end
+
+        end
+    end
+
+    // mem_we_o输出到数据存储器，表示是否是对数据存储器的写操作，
+    // 如果发⽣了异常，那么需要取消对数据存储器的写操作
+    assign mem_we_o = mem_we & (~(|exception_type_o));
 endmodule
