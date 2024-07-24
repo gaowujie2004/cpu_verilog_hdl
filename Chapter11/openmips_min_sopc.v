@@ -15,8 +15,11 @@ module openmips_min_sopc (
     wire[`RegBus]      ram_wdata;
     wire[`RegBus]      ram_data_o;
 
+    wire[5:0]          timer_int_o;  
+
     openmips openmips_0(
         .rst(rst), .clk(clk), .rom_data_i(rom_inst_o), .ram_data_i(ram_data_o),
+        .int_i({5'b00000, timer_int_o}),
 
         /*rom*/
         .rom_ce_o(rom_ce_i), .rom_addr_o(rom_addr_i),
@@ -25,7 +28,9 @@ module openmips_min_sopc (
         .ram_we_o(ram_we),
         .ram_ce_o(ram_ce),  
         .ram_sel_o(ram_sel),
-        .ram_wdata_o(ram_wdata)
+        .ram_wdata_o(ram_wdata),
+        /*int*/
+        .timer_int_o(timer_int_o)   //时钟中断输出
     );
 
     inst_rom inst_rom_0(
