@@ -79,72 +79,7 @@ module cp0_reg (
                     end
                 endcase
             end
-        end
-    end
 
-    //后读
-    always @(*) begin
-        if (rst == `RstEnable) begin
-            data_o <= `ZeroWord;
-            timer_int_o <= `InterruptNotAssert;
-        end else begin
-            /*
-             * 数据前推，和Regfile、HiLo一样的思路；和HiLo是一模一样。
-             * 优先级，也是一样的。
-            */
-            if (mem_we_i==`True_v && mem_waddr_i==raddr_i) begin
-                data_o <= mem_wdata_i;
-                if (raddr_i == `CP0_REG_STATUS) begin
-                    status_o <= mem_wdata_i;
-                end else if (raddr_i == `CP0_REG_CAUSE) begin
-                    cause_o  <= mem_wdata_i;
-                end
-            end else if (wb_we_i==`True_v && wb_waddr_i==raddr_i) begin
-                /*
-                 * I1: mtc0 $3, $31  CP0[3] <- R[31] 写CP0[3]
-                 * I2: nop
-                 * I3: mfco $4, $3   R[4] <- CP0[3]  读CP0[3]
-                */
-                /*I1指令刚进入WB阶段时还不能写入寄存器，因要等到下一个时钟上升沿才能写入，过意就直接拿过来了。*/
-                data_o <= wb_wdata_i;
-                if (raddr_i == `CP0_REG_STATUS) begin
-                    status_o <= wb_wdata_i;
-                end else if (raddr_i == `CP0_REG_CAUSE) begin
-                    cause_o  <= wb_wdata_i;
-                end
-            end else begin
-                /* 无数据相关，正常读 */
-                case (raddr_i)
-                    `CP0_REG_COUNT: begin
-                        data_o   <= inner_count;
-                    end
-                    `CP0_REG_COMPARE: begin
-                        data_o   <= inner_compare;
-                    end
-                    `CP0_REG_STATUS: begin
-                        data_o   <= inner_status;
-                        status_o <= inner_status;
-                    end
-                    `CP0_REG_CAUSE: begin
-                        data_o  <= inner_cause;
-                        cause_o <= inner_cause;
-                    end
-                    `CP0_REG_EPC: begin
-                        data_o  <= inner_epc;
-                    end
-                    `CP0_REG_CONFIG: begin
-                        data_o  <= inner_config;
-                    end
-                    `CP0_REG_PrId: begin
-                        data_o  <= inner_prid;
-                    end
-                endcase
-            end
-        end
-    end
-
-    always @(*) begin
-        if (rst == `RstDisable) begin
             case (exception_type_i)
                 `Exc_Interrupt: begin
                     if (is_in_delayslot_i) begin
@@ -218,6 +153,67 @@ module cp0_reg (
                     inner_status[1]   <=  1'b0;
                 end
             endcase
+        end
+    end
+
+    //后读
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            data_o <= `ZeroWord;
+            timer_int_o <= `InterruptNotAssert;
+        end else begin
+            /*
+             * 数据前推，和Regfile、HiLo一样的思路；和HiLo是一模一样。
+             * 优先级，也是一样的。
+            */
+            if (mem_we_i==`True_v && mem_waddr_i==raddr_i) begin
+                data_o <= mem_wdata_i;
+                if (raddr_i == `CP0_REG_STATUS) begin
+                    status_o <= mem_wdata_i;
+                end else if (raddr_i == `CP0_REG_CAUSE) begin
+                    cause_o  <= mem_wdata_i;
+                end
+            end else if (wb_we_i==`True_v && wb_waddr_i==raddr_i) begin
+                /*
+                 * I1: mtc0 $3, $31  CP0[3] <- R[31] 写CP0[3]
+                 * I2: nop
+                 * I3: mfco $4, $3   R[4] <- CP0[3]  读CP0[3]
+                */
+                /*I1指令刚进入WB阶段时还不能写入寄存器，因要等到下一个时钟上升沿才能写入，过意就直接拿过来了。*/
+                data_o <= wb_wdata_i;
+                if (raddr_i == `CP0_REG_STATUS) begin
+                    status_o <= wb_wdata_i;
+                end else if (raddr_i == `CP0_REG_CAUSE) begin
+                    cause_o  <= wb_wdata_i;
+                end
+            end else begin
+                /* 无数据相关，正常读 */
+                case (raddr_i)
+                    `CP0_REG_COUNT: begin
+                        data_o   <= inner_count;
+                    end
+                    `CP0_REG_COMPARE: begin
+                        data_o   <= inner_compare;
+                    end
+                    `CP0_REG_STATUS: begin
+                        data_o   <= inner_status;
+                        status_o <= inner_status;
+                    end
+                    `CP0_REG_CAUSE: begin
+                        data_o  <= inner_cause;
+                        cause_o <= inner_cause;
+                    end
+                    `CP0_REG_EPC: begin
+                        data_o  <= inner_epc;
+                    end
+                    `CP0_REG_CONFIG: begin
+                        data_o  <= inner_config;
+                    end
+                    `CP0_REG_PrId: begin
+                        data_o  <= inner_prid;
+                    end
+                endcase
+            end
         end
     end
     
