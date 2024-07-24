@@ -16,8 +16,8 @@ module data_ram (
 );
     /* 
      * 前面是存储单元位宽，本存储器是字节编址，故存储单元位宽8bit，
-     * 本存储器数据字长=32bit，一次数据读在数据总线上传递32bit数据，
-     * 存储单元共有 DataMemNum*4 个
+     * 本存储器数据字长=32bit，一次数据读在数据总线上传递32bit数据，存储单元共有 DataMemNum*4 个
+     * 4个基本存储单元可并行读取，共32bit的数据
     */
     reg[`ByteWidth] ram0[0:`DataMemNum-1];  //大端字节序。该字节存储体存放多字节数据的最高有效位(MSB)1Byte，即addr_i[1:0]==0也是存储低地址数据，sel与该有映射关系
     reg[`ByteWidth] ram1[0:`DataMemNum-1];  
