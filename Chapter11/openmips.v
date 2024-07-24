@@ -21,7 +21,7 @@ module openmips (
     output wire[`MemSelBus]   ram_sel_o,  //字节选择
     output wire[`RegBus]      ram_wdata_o, //写入RAM的数据
 
-	output wire               timer_int_o   //Why？什么用途
+	output wire               timer_int_o
 );
     // 第一部分：连接各个模块的传送线缆
     // pipeline_ctrl部件
@@ -273,7 +273,7 @@ module openmips (
         .cp0_we_o(ex_cp0_we_o),
         .cp0_waddr_o(ex_cp0_waddr_o),
         .cp0_wdata_o(ex_cp0_wdata_o),
-        /*异常*/
+        /*exception*/
         .exception_type_o(ex_exception_type_o),
         .inst_addr_o(ex_inst_addr_o),
         .is_in_delayslot_o(ex_is_in_delayslot_o)
@@ -340,7 +340,7 @@ module openmips (
         .mem_cp0_we(mem_cp0_we_i),
         .mem_cp0_waddr(mem_cp0_waddr_i),
         .mem_cp0_wdata(mem_cp0_wdata_i),
-        /*异常*/
+        /*exception*/
         .mem_exception_type(mem_exception_type_i),
         .mem_inst_addr(mem_inst_addr_i),
         .mem_is_in_delayslot(mem_is_in_delayslot_i)
@@ -411,7 +411,7 @@ module openmips (
     );
 
     // MEM_WB寄存器
-        /*WB阶段写回HILO*/
+    /*WB阶段写回HILO*/
     wire            wb_hi_we_i;
     wire            wb_lo_we_i;
     wire[`RegBus]   wb_hi_i;
@@ -426,7 +426,9 @@ module openmips (
         .rst(rst), .clk(clk),
         .stall(stall),
         .mem_inst(mem_inst_o),
+        /*to regfile*/
         .mem_waddr(mem_waddr_o), .mem_reg_we(mem_reg_we_o), .mem_wdata(mem_alu_res_o),
+        /*to hilo*/
         .mem_hi_we(mem_hi_we_o), .mem_lo_we(mem_lo_we_o), .mem_hi(mem_hi_o), .mem_lo(mem_lo_o),
         .mem_llbit_we(mem_llbit_we_o),
         .mem_llbit_value(mem_llbit_value_o),
@@ -437,10 +439,12 @@ module openmips (
         /*exception*/
         .flush(flush),
 
-
-        .wb_waddr(wb_waddr_o), .wb_reg_we(wb_we_o), .wb_wdata(wb_wdata_o),   //送入regfile
-        .wb_hi_we(wb_hi_we_i), .wb_lo_we(wb_lo_we_i), .wb_hi(wb_hi_i), .wb_lo(wb_lo_i), //送入hilo
-        .wb_inst(wb_inst_i), //送入regfile、hilo
+        /*to regfile*/
+        .wb_waddr(wb_waddr_o), .wb_reg_we(wb_we_o), .wb_wdata(wb_wdata_o),   
+        /*hilo*/
+        .wb_hi_we(wb_hi_we_i), .wb_lo_we(wb_lo_we_i), .wb_hi(wb_hi_i), .wb_lo(wb_lo_i),
+        .wb_inst(wb_inst_i),
+        /*llbit*/
         .wb_llbit_we(wb_llbit_we), .wb_llbit_value(wb_llbit_value),
         /*cp0 mt(f)c0*/
         .wb_cp0_we(wb_cp0_we_i),
@@ -453,7 +457,7 @@ module openmips (
         .wb_inst_i(wb_inst_i),
         .wb_hi_we_i(wb_hi_we_i), .wb_lo_we_i(wb_lo_we_i), .wb_hi_i(wb_hi_i), .wb_lo_i(wb_lo_i),
         .mem_hi_we_i(mem_hi_we_i), .mem_lo_we_i(mem_lo_we_i), .mem_hi_i(mem_hi_i), .mem_lo_i(mem_lo_i),
-        //输出
+
         .hi_o(ex_hi_i), .lo_o(ex_lo_i)
     );
 
@@ -483,7 +487,6 @@ module openmips (
         .inst_addr_i(mem_inst_addr_o),          
         .is_in_delayslot_i(mem_is_in_delayslot_o),     
 
-
         .data_o      (ex_cp0_data_i),
         .timer_int_o(timer_int_o),
         .status_o(cp0_status_o),
@@ -503,9 +506,6 @@ module openmips (
         .flush(flush),
         .exception_handler_addr(exception_handler_addr)
     );
-    
-    
-    
 endmodule
 
 // Why：为什么不写到 always 语句块中了？，因为是模块连线，必须在模块顶层。
