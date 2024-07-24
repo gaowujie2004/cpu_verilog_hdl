@@ -31,7 +31,7 @@ module openmips (
     wire[`RegBus]           ctrl_cp0_epc_i;
     wire[`StallBus] stall;
     wire            flush;
-    wire[`InstAddrBus] exec_handler_addr;
+    wire[`InstAddrBus] exception_handler_addr;
 
     wire[`InstAddrBus] branch_target_address_o;
     wire               branch_flag_o;
@@ -45,7 +45,7 @@ module openmips (
         .branch_target_address_i(branch_target_address_o),
         /*异常相关*/
         .flush(flush),
-        .exception_handle_addr_i(exec_handler_addr),
+        .exception_handle_addr_i(exception_handler_addr),
         
         .pc(if_pc),
         .ce(rom_ce_o)
@@ -323,7 +323,7 @@ module openmips (
         .ex_cp0_we(ex_cp0_we_o),
         .ex_cp0_waddr(ex_cp0_waddr_o),
         .ex_cp0_wdata(ex_cp0_wdata_o),
-        /*exec*/
+        /*exception*/
         .flush(flush),
         .ex_exception_type(ex_exception_type_o),
         .ex_inst_addr(ex_inst_addr_o),
@@ -360,7 +360,7 @@ module openmips (
     wire               mem_cp0_we_o;       //写使能
     wire[4:0]          mem_cp0_waddr_o;    //写CP0寄存器的地址
     wire[`RegBus]      mem_cp0_wdata_o;    //写入CP0寄存器的数据
-    /*exec*/
+    /*exception*/
     wire[`RegBus]      cp0_status_o;
     wire[`RegBus]      cp0_cause_o;
     wire[`ExceptionTypeBus]   mem_exception_type_o;
@@ -381,7 +381,7 @@ module openmips (
         .cp0_we_i(mem_cp0_we_i),
         .cp0_waddr_i(mem_cp0_waddr_i),
         .cp0_wdata_i(mem_cp0_wdata_i),
-        /*exec*/
+        /*exception*/
         .exception_type_i(mem_exception_type_i),
         .inst_addr_i(mem_inst_addr_i),
         .is_in_delayslot_i(mem_is_in_delayslot_i),
@@ -404,7 +404,7 @@ module openmips (
         .cp0_we_o(mem_cp0_we_o),
         .cp0_waddr_o(mem_cp0_waddr_o),
         .cp0_wdata_o(mem_cp0_wdata_o),
-        /*exec*/
+        /*exception*/
         .exception_type_o(mem_exception_type_o),
         .inst_addr_o(mem_inst_addr_o),
         .is_in_delayslot_o(mem_is_in_delayslot_o)
@@ -434,7 +434,7 @@ module openmips (
         .mem_cp0_we(mem_cp0_we_o),
         .mem_cp0_waddr(mem_cp0_waddr_o),
         .mem_cp0_wdata(mem_cp0_wdata_o),
-        /*exec*/
+        /*exception*/
         .flush(flush),
 
 
@@ -501,7 +501,7 @@ module openmips (
 
         .stall(stall),
         .flush(flush),
-        .exec_handler_addr(exec_handler_addr)
+        .exception_handler_addr(exception_handler_addr)
     );
     
     

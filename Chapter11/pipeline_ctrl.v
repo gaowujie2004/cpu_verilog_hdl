@@ -13,17 +13,17 @@ module pipeline_ctrl (
 
     output reg[`StallBus] stall,    //数值的右边是低位，低位从PC_reg依次向后、IF/EX、EX/MEM ....。
     output reg            flush,    //响应中断，清空寄存器，让其变成NOP指令
-    output reg[`InstAddrBus] exec_handler_addr  //异常处理程序的地址   
+    output reg[`InstAddrBus] exception_handler_addr  //异常处理程序的地址   
 );
     always @(*) begin
         if (rst == `RstEnable) begin
             stall <= 6'b000000;
             flush <= `False_v;
-            exec_handler_addr <= `ZeroWord;
+            exception_handler_addr <= `ZeroWord;
         end else begin
             stall <= 6'b000000;
             flush <= `False_v;
-            exec_handler_addr <= `ZeroWord;
+            exception_handler_addr <= `ZeroWord;
 
             /*
             * 异常的优先级比流水线暂停高
@@ -32,13 +32,13 @@ module pipeline_ctrl (
                 flush <= `True_v;
                 case (exception_i)
                     `Exc_Interrupt: begin
-                        exec_handler_addr <= 32'h00000020;
+                        exception_handler_addr <= 32'h00000020;
                     end
                     `Exc_Syscall, `Exc_InvalidInst, `Exc_Trap, `Exc_Overflow: begin
-                        exec_handler_addr <= 32'h00000040;
+                        exception_handler_addr <= 32'h00000040;
                     end
                     `Exc_Eret: begin
-                        exec_handler_addr <= cp0_epc_i;
+                        exception_handler_addr <= cp0_epc_i;
                     end
                 endcase
             end else if (stallreq_from_ex == `Stop) begin
