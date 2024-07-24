@@ -218,6 +218,7 @@ module cp0_reg (
                     end
                     `CP0_REG_EPC: begin
                         data_o  <= inner_epc;
+                        epc_o   <= inner_epc;
                     end
                     `CP0_REG_CONFIG: begin
                         data_o  <= inner_config;
