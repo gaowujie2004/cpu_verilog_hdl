@@ -284,7 +284,7 @@ module openmips (
         .opdata1_i    (opdata1_i    ),
         .opdata2_i    (opdata2_i    ),
         .start_i      (start_i      ),
-        .cancel_i     (1'b0         ),
+        .cancel_i     (flush        ),
         
         .result_o     (div_result_o ),
         .ready_o      (div_ready_o  )
