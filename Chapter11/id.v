@@ -95,7 +95,6 @@ module id (
 			alusel_o <= `ALU_RES_NOP;
 			waddr_o <= `NOPRegAddr;
 			wreg_o <= `WriteDisable;
-			instvalid <= `InstValid;
 			reg1_read_o <= `ReadDisable;
 			reg2_read_o <= `ReadDisable;
 			reg1_addr_o <= `NOPRegAddr;
@@ -113,6 +112,7 @@ module id (
             //异常相关
             is_syscall <= `False_v;
             is_eret    <= `False_v;
+			instvalid  <= `False_v;
         end else begin
             // TODO:很重要，case 分支如果未命中，默认逻辑
             wreg_o      <= `WriteDisable;
