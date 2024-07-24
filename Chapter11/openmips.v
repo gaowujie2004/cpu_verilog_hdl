@@ -43,7 +43,7 @@ module openmips (
         .stall(stall),
         .branch_flag_i(branch_flag_o),
         .branch_target_address_i(branch_target_address_o),
-        /*异常相关*/
+        /*exception*/
         .flush(flush),
         .exception_handle_addr_i(exception_handler_addr),
         
@@ -103,7 +103,7 @@ module openmips (
     wire[`InstBus]    id_inst_o;
     wire              id_ex_is_in_delayslot_o;
 
-    wire[`ExceptionTypeBus]    id_exception_type_o;   //异常相关 
+    wire[`ExceptionTypeBus]    id_exception_type_o;   //exception 
     wire[`InstAddrBus]         id_inst_addr_o;    
 
     id id_0(
@@ -136,7 +136,7 @@ module openmips (
         //反馈pc
         .branch_flag_o(branch_flag_o),
         .branch_target_o(branch_target_address_o),
-        //异常相关
+        //exception
         .exception_type_o(id_exception_type_o),
         .inst_addr_o(id_inst_addr_o)
     );
@@ -171,7 +171,7 @@ module openmips (
     wire              ex_is_indelayslot_i; 
     wire[`InstAddrBus]ex_link_addr_i;
     wire[`RegBus]     ex_reg2_data_i;
-    wire[`ExceptionTypeBus]   ex_exception_type_i;   //异常相关 
+    wire[`ExceptionTypeBus]   ex_exception_type_i;   //exception 
     wire[`InstAddrBus]         ex_inst_addr_i;    
 
     id_ex id_ex_0(
@@ -183,7 +183,7 @@ module openmips (
         .id_is_in_delayslot(id_is_in_delayslot_o), .id_link_address(id_link_addr_o),
         .id_next_inst_in_delayslot(id_next_inst_in_delayslot_o),
         .id_reg2_data(id_reg2_data_o),
-        /*异常相关*/
+        /*exception*/
         .flush(flush),
         .id_exception_type(id_exception_type_o),
         .id_inst_addr(id_inst_addr_o),
@@ -231,7 +231,7 @@ module openmips (
     wire             ex_cp0_we_o;       //写使能
     wire[4:0]        ex_cp0_waddr_o;    //写CP0寄存器的地址
     wire[`RegBus]    ex_cp0_wdata_o;    //写入CP0寄存器的数据
-    /*异常相关*/
+    /*exception*/
     wire[`ExceptionTypeBus]   ex_exception_type_o;
     wire[`InstAddrBus]        ex_inst_addr_o; 
     wire                      ex_is_in_delayslot_o;
@@ -307,7 +307,7 @@ module openmips (
     wire               mem_cp0_we_i;       //写使能
     wire[4:0]          mem_cp0_waddr_i;    //写CP0寄存器的地址
     wire[`RegBus]      mem_cp0_wdata_i;    //写入CP0寄存器的数据
-    /*异常相关*/
+    /*exception*/
     wire[`ExceptionTypeBus]   mem_exception_type_i;
     wire[`InstAddrBus]        mem_inst_addr_i; 
     wire                      mem_is_in_delayslot_i;
@@ -478,7 +478,7 @@ module openmips (
         .wb_wdata_i      (wb_cp0_wdata_i),
         .int_i       (int_i),
         .raddr_i     (ex_cp0_raddr_o),
-        /*异常相关*/
+        /*exception*/
         .exception_type_i(mem_exception_type_o), 
         .inst_addr_i(mem_inst_addr_o),          
         .is_in_delayslot_i(mem_is_in_delayslot_o),     
@@ -495,7 +495,7 @@ module openmips (
         .rst(rst),
         .stallreq_from_id(stallreq_from_id),
         .stallreq_from_ex(stallreq_from_ex),
-        /*异常相关*/
+        /*exception*/
         .cp0_epc_i(cp0_epc_o),
         .exception_i(mem_exception_type_o),
 
