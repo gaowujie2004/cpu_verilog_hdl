@@ -1,7 +1,7 @@
 `include "defines.v"
 
 /*
- * Think: 存储器的逻辑中，需要关注是大小端吗？我觉得不需要，一会测试一下
+ * Think: 存储器的逻辑中，需要关注是大小端吗？我觉得不需要，一会测试一下，确实是这样的。
  * 通常都是说机器字节序，所以应该是和CPU相关。而当前模块是DRAM。
 */
 module data_ram (
@@ -29,7 +29,10 @@ module data_ram (
     /* 写操作 */
     always @(posedge clk) begin
         if (ce_i==`ChipEnable && we_i==`WriteEnable) begin
-            // ram0存储数据的最高有效位，MSB数据在寄存器是在高位
+            /*
+             * ram0存储数据的最高有效位，MSB数据在寄存器是在高位
+             * 当然也可以ram3存储字节数据的MSB，只要读写保持相同的即可。
+            */
             if (sel_i[3]) begin
                 ram0[inner_addr] <= data_i[31:24];
             end
