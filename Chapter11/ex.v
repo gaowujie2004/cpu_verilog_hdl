@@ -494,9 +494,11 @@ module ex (
                                 : op2_data_i;
 
     wire[`RegBus] result_sum = op1_data_i + op2_i_mux;
-    wire op1_lt_op2 =  ((aluop_i == `ALU_SLT_OP) ||
+    wire op1_lt_op2 =  ((aluop_i == `ALU_SUB_OP) ||
+                        (aluop_i == `ALU_SUBU_OP)||
+                        (aluop_i == `ALU_SLT_OP) ||
                         (aluop_i == `ALU_TLT_OP) ||
-                        (aluop_i == `ALU_TGE_OP) ) ?                   //判断有无符号，为什么不直接判断result_sum符号位？注意溢出
+                        (aluop_i == `ALU_TGE_OP)) ?                   //判断有无符号，为什么不直接判断result_sum符号位？注意溢出
                             ((op1_data_i[31] && !op2_data_i[31]) ||                        //-、+
                             (!op1_data_i[31] && !op2_data_i[31] && result_sum[31])||       //+、+，不会溢出
                             (op1_data_i[31]  && op2_data_i[31]  && result_sum[31]))        //-、-，不会溢出
