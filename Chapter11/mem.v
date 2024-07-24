@@ -484,7 +484,7 @@ module mem (
             if (inst_addr_i != `ZeroWord) begin
                 if ( (cp0_cause_i[15:8] & (cp0_status_i[15:8])) != 8'b0 && cp0_status_i[1]==`False_v && cp0_status_i[0]==`True_v) begin  //外部中断
                     /*
-                     * cause[15:0]外部中断、status[15:8]中断屏蔽位
+                     * cause[15:8]外部中断、status[15:8]中断屏蔽位
                      * Status[0]：表示是否使能中断（Interrupt Enable），这是全局中断使能标志位。为1表示中断使能，为0表示中断禁⽌
                      * Status[1]：表示是否处于异常级（Exception Level），当异常发⽣时，会设置本字段为1，表示处理器处于异常级，此时禁⽌中断。
                     */
