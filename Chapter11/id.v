@@ -491,7 +491,7 @@ module id (
                             `FUNC_TEQ: begin
                                 instvalid <= `True_v;
                                 alusel_o  <= `ALU_RES_NOP; 
-                                aluop_o   <= `ALU_SYSCALL_OP;
+                                aluop_o   <= `ALU_TEQ_OP;
                                 //write reg
                                 wreg_o    <= `ReadDisable;
                                 //read1 reg
