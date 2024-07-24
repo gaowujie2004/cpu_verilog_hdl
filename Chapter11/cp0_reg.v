@@ -210,15 +210,12 @@ module cp0_reg (
                     end
                     `CP0_REG_STATUS: begin
                         data_o   <= inner_status;
-                        status_o <= inner_status;
                     end
                     `CP0_REG_CAUSE: begin
                         data_o  <= inner_cause;
-                        cause_o <= inner_cause;
                     end
                     `CP0_REG_EPC: begin
                         data_o  <= inner_epc;
-                        epc_o   <= inner_epc;
                     end
                     `CP0_REG_CONFIG: begin
                         data_o  <= inner_config;
@@ -227,6 +224,10 @@ module cp0_reg (
                         data_o  <= inner_prid;
                     end
                 endcase
+                /*不指定端口读*/
+                status_o <= inner_status;
+                cause_o  <= inner_cause;
+                epc_o    <= inner_epc;
             end
         end
     end
