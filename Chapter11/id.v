@@ -499,7 +499,7 @@ module id (
                                 reg1_addr_o <= rs;
                                 //read2 reg
                                 reg2_read_o <= `ReadEnable;
-                                reg2_read_o <= rt;
+                                reg2_addr_o <= rt;
                             end
                             `FUNC_TGE: begin
                                 instvalid <= `True_v;
@@ -512,7 +512,7 @@ module id (
                                 reg1_addr_o <= rs;
                                 //read2 reg
                                 reg2_read_o <= `ReadEnable;
-                                reg2_read_o <= rt;
+                                reg2_addr_o <= rt;
                             end
                             `FUNC_TGEU: begin
                                 instvalid <= `True_v;
@@ -525,7 +525,7 @@ module id (
                                 reg1_addr_o <= rs;
                                 //read2 reg
                                 reg2_read_o <= `ReadEnable;
-                                reg2_read_o <= rt;
+                                reg2_addr_o <= rt;
                             end
                             `FUNC_TLT: begin
                                 instvalid <= `True_v;
@@ -538,7 +538,7 @@ module id (
                                 reg1_addr_o <= rs;
                                 //read2 reg
                                 reg2_read_o <= `ReadEnable;
-                                reg2_read_o <= rt;
+                                reg2_addr_o <= rt;
                             end
                             `FUNC_TLTU: begin
                                 instvalid <= `True_v;
@@ -551,7 +551,7 @@ module id (
                                 reg1_addr_o <= rs;
                                 //read2 reg
                                 reg2_read_o <= `ReadEnable;
-                                reg2_read_o <= rt;
+                                reg2_addr_o <= rt;
                             end
                             `FUNC_TNE: begin
                                 instvalid <= `True_v;
@@ -564,7 +564,7 @@ module id (
                                 reg1_addr_o <= rs;
                                 //read2 reg
                                 reg2_read_o <= `ReadEnable;
-                                reg2_read_o <= rt;
+                                reg2_addr_o <= rt;
                             end
                             `FUNC_SYSCALL: begin
                                 instvalid <= `True_v;
@@ -577,7 +577,7 @@ module id (
                                 reg1_addr_o <= rs;
                                 //read2 reg
                                 reg2_read_o <= `ReadEnable;
-                                reg2_read_o <= rt;  
+                                reg2_addr_o <= rt;  
                                 //syscall
                                 is_syscall  <= `True_v;
                             end
