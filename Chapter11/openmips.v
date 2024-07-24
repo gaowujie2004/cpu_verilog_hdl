@@ -363,7 +363,6 @@ module openmips (
     /*exec*/
     wire[`RegBus]      cp0_status_o;
     wire[`RegBus]      cp0_cause_o;
-    wire[`RegBus]      cp0_epc_o;
     wire[`ExceptionTypeBus]   mem_exception_type_o;
     wire[`InstAddrBus]        mem_inst_addr_o; 
     wire                      mem_is_in_delayslot_o;
@@ -467,8 +466,7 @@ module openmips (
         .llbit_o    (llbit_o)
     );
     
-    wire[`RegBus] status_o;
-    wire[`RegBus] cause_o;
+    wire[`RegBus] cp0_epc_o;
     cp0_reg cp0_reg_0(
     	.clk         (clk),
         .rst         (rst),
@@ -489,7 +487,8 @@ module openmips (
         .data_o      (ex_cp0_data_i),
         .timer_int_o(timer_int_o),
         .status_o(cp0_status_o),
-        .cause_o(cp0_cause_o)
+        .cause_o(cp0_cause_o),
+        .epc_o(cp0_epc_o)
     );
 
     pipeline_ctrl pipeline_ctrl_0(

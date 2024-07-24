@@ -22,7 +22,8 @@ module cp0_reg (
     output reg          timer_int_o, //定时中断触发
     output reg[`RegBus] data_o,      //读取的值
     output reg[`RegBus] status_o,    //控制处理器的操作模式、中断使能以及诊断状态
-    output reg[`RegBus] cause_o      //主要记录最近⼀次异常发⽣的原因，也控制软件中断请求
+    output reg[`RegBus] cause_o,     //主要记录最近⼀次异常发⽣的原因，也控制软件中断请求
+    output reg[`RegBus] epc_o
 );
     reg[`RegBus] inner_count;     //计数器的值，只读
     reg[`RegBus] inner_compare;   //与count_o对比的值，若相等则定时中断触发
@@ -168,11 +169,17 @@ module cp0_reg (
             */
             if (mem_we_i==`True_v && mem_waddr_i==raddr_i) begin
                 data_o <= mem_wdata_i;
-                if (raddr_i == `CP0_REG_STATUS) begin
-                    status_o <= mem_wdata_i;
-                end else if (raddr_i == `CP0_REG_CAUSE) begin
-                    cause_o  <= mem_wdata_i;
-                end
+                case (raddr_i)
+                    `CP0_REG_STATUS: begin
+                        status_o <= mem_wdata_i;
+                    end
+                    `CP0_REG_CAUSE: begin
+                        cause_o  <= mem_wdata_i;
+                    end
+                    `CP0_REG_EPC: begin
+                        epc_o    <= mem_waddr_i;
+                    end
+                endcase
             end else if (wb_we_i==`True_v && wb_waddr_i==raddr_i) begin
                 /*
                  * I1: mtc0 $3, $31  CP0[3] <- R[31] 写CP0[3]
@@ -181,11 +188,17 @@ module cp0_reg (
                 */
                 /*I1指令刚进入WB阶段时还不能写入寄存器，因要等到下一个时钟上升沿才能写入，过意就直接拿过来了。*/
                 data_o <= wb_wdata_i;
-                if (raddr_i == `CP0_REG_STATUS) begin
-                    status_o <= wb_wdata_i;
-                end else if (raddr_i == `CP0_REG_CAUSE) begin
-                    cause_o  <= wb_wdata_i;
-                end
+                case (raddr_i)
+                    `CP0_REG_STATUS: begin
+                        status_o <= wb_wdata_i;
+                    end
+                    `CP0_REG_CAUSE: begin
+                        cause_o  <= wb_wdata_i;
+                    end
+                    `CP0_REG_EPC: begin
+                        epc_o    <= mem_waddr_i;
+                    end
+                endcase
             end else begin
                 /* 无数据相关，正常读 */
                 case (raddr_i)
