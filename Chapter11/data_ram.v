@@ -9,7 +9,7 @@ module data_ram (
     input wire[`InstAddrBus] addr_i,  //内存地址
     input wire[`RegBus]      data_i,  //写入ram的数据
     input wire               we_i,    //是否写？
-    input wire[`MemSelBus]   sel_i,   //字节选择，低位指明多字节数据LSB、高位指明多字节数据MSB
+    input wire[`MemSelBus]   sel_i,   //字节选择，sel[0]低位指明多字节数据LSB、 sel[3]高位指明多字节数据MSB
     input wire               ce_i,    //存储器使能控制
 
     output reg[`RegBus]     data_o    //读内存的数据
@@ -32,6 +32,8 @@ module data_ram (
             /*
              * ram0存储数据的最高有效位，MSB数据在寄存器是在高位
              * 当然也可以ram3存储字节数据的MSB，只要读写保持相同的即可。
+
+             * 寄存器中的数据是没有字节序的概念的，data_i认为[31:24] MSB（最高有效位的数据）
             */
             if (sel_i[3]) begin
                 ram0[inner_addr] <= data_i[31:24];
