@@ -491,7 +491,7 @@ module mem (
                     exception_type_o <= `Exc_Interrupt;  //外部中断
                 end else if (exception_type_i[8]) begin  //syscall inst
                     exception_type_o <= `Exc_Syscall;
-                end else if (exception_type_i[9]) begin  //invalid inst
+                end else if (exception_type_i[9]==`False_v) begin  //invalid inst
                     exception_type_o <= `Exc_InvalidInst;
                 end else if (exception_type_i[10]) begin //trap
                     exception_type_o <= `Exc_Trap;
