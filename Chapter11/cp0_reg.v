@@ -177,7 +177,7 @@ module cp0_reg (
                         cause_o  <= mem_wdata_i;
                     end
                     `CP0_REG_EPC: begin
-                        epc_o    <= mem_waddr_i;
+                        epc_o    <= mem_wdata_i;
                     end
                 endcase
             end else if (wb_we_i==`True_v && wb_waddr_i==raddr_i) begin
@@ -196,7 +196,7 @@ module cp0_reg (
                         cause_o  <= wb_wdata_i;
                     end
                     `CP0_REG_EPC: begin
-                        epc_o    <= mem_waddr_i;
+                        epc_o    <= wb_wdata_i;
                     end
                 endcase
             end else begin
