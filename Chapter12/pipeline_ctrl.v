@@ -6,8 +6,10 @@
 */
 module pipeline_ctrl (
     input wire rst,
+    input wire stallreq_from_if,
     input wire stallreq_from_id,
     input wire stallreq_from_ex,
+    input wire stallreq_from_mem,
     input wire[`ExceptionTypeBus] exception_i,
     input wire[`RegBus]           cp0_epc_i,
 
@@ -41,6 +43,8 @@ module pipeline_ctrl (
                         exception_handler_addr <= cp0_epc_i;
                     end
                 endcase
+            end else if (stallreq_from_mem == `Stop) begin
+                stall <= 6'b011111;
             end else if (stallreq_from_ex == `Stop) begin
                 /*
                 * Why: 为什么先判断ex阶段，而不是id阶段？或者说此次的顺序调换会影响预期吗？
@@ -48,6 +52,11 @@ module pipeline_ctrl (
                 */
                 stall <= 6'b001111;
             end else if (stallreq_from_id == `Stop) begin
+                stall <= 6'b000111;
+            end else if (stallreq_from_if == `Stop) begin
+                /*
+                 * Think: 当ID阶段是转移指令时，如果stall=6'b000011;则会将NOP指令当做延迟槽指令，故要写成如下值。
+                */
                 stall <= 6'b000111;
             end
         end
