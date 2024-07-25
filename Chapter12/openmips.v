@@ -6,20 +6,36 @@
 module openmips (
     input wire rst,
     input wire clk,
-    input wire[`InstBus] rom_data_i,      // 指令存储器ROM输入的指令字
-    input wire[`RegBus]  ram_data_i,      // 数据存储器RAM生成的数据字
+
     input wire[5:0]      int_i,           // 6个外部硬件中断源
 
-    /*输出到inst_rom模块*/
-    output wire rom_ce_o,                 //ROM读使能
-    output wire[`InstAddrBus] rom_addr_o, //输出到ROM的地址
+    input wire[`RegBus] iwishbone_data_i,
+    input wire          iwishbone_ack_i,
 
-    /*输出到data_ram模块*/
-    output wire[`InstAddrBus] ram_addr_o, //RAM读写地址
-    output wire               ram_we_o,   //RAM写？读？
-    output wire               ram_ce_o,   //RAM工作使能
-    output wire[`MemSelBus]   ram_sel_o,  //字节选择
-    output wire[`RegBus]      ram_wdata_o, //写入RAM的数据
+    input wire[`RegBus] dwishbone_data_i,
+    input wire          dwishbone_ack_i,
+
+
+    /*SRAM控制器接口？*/
+    output wire[`RegBus]      iwishbone_addr_o,
+    output wire[`RegBus]      iwishbone_data_o,
+    output wire               iwishbone_we_o,
+    output wire[3:0]          iwishbone_sel_o,
+    output wire               iwishbone_stb_o,
+    output wire               iwishbone_cyc_o,
+
+
+    /*SDRAM控制器接口？*/
+    output wire[`RegBus]      dwishbone_addr_o,
+    output wire[`RegBus]      dwishbone_data_o,
+    output wire               dwishbone_we_o,
+    output wire[3:0]          dwishbone_sel_o,
+    output wire               dwishbone_stb_o,
+    output wire               dwishbone_cyc_o,
+
+
+
+
 
 	output wire               timer_int_o
 );
@@ -37,6 +53,8 @@ module openmips (
     wire               branch_flag_o;
     // IF阶段
     wire[`InstAddrBus] if_pc;
+    wire[`RegBus]      if_inst;
+    wire               rom_ce;
     pc_reg pc_reg_0(
         .rst(rst),
         .clk(clk),
@@ -48,10 +66,9 @@ module openmips (
         .exception_handle_addr_i(exception_handler_addr),
         
         .pc(if_pc),
-        .ce(rom_ce_o)
+        .ce(rom_ce)
     );
     
-    assign rom_addr_o = if_pc;  // TODO：wire型赋值，必须使用assign。
 
     // IF_ID寄存器
     wire[`InstAddrBus] id_pc_i;
@@ -60,7 +77,7 @@ module openmips (
     if_id if_id_0(
         .rst(rst), .clk(clk), 
         .if_pc(if_pc),
-        .if_inst(rom_data_i), 
+        .if_inst(if_inst), 
         .stall(stall),
         .flush(flush),
 
@@ -367,6 +384,13 @@ module openmips (
     wire[`InstAddrBus]        mem_inst_addr_o; 
     wire                      mem_is_in_delayslot_o;
 
+    /*sdram*/
+    wire[`RegBus]      ram_data_i;
+    wire[`RegBus]      ram_addr_o;
+    wire[`RegBus]      ram_wdata_o;
+    wire[3:0]          ram_sel_o;
+    wire               ram_we_o;
+    wire               ram_ce_o;
     mem mem_0(
         .rst(rst), 
         .inst_i(mem_inst_i),
@@ -494,10 +518,14 @@ module openmips (
         .epc_o(cp0_epc_o)
     );
 
+    wire stallreq_from_if;
+    wire stallreq_from_mem;
     pipeline_ctrl pipeline_ctrl_0(
         .rst(rst),
         .stallreq_from_id(stallreq_from_id),
         .stallreq_from_ex(stallreq_from_ex),
+        .stallreq_from_if(stallreq_from_if),
+        .stallreq_from_mem(stallreq_from_mem),
         /*exception*/
         .cp0_epc_i(cp0_epc_o),
         .exception_i(mem_exception_type_o),
@@ -505,6 +533,58 @@ module openmips (
         .stall(stall),
         .flush(flush),
         .exception_handler_addr(exception_handler_addr)
+    );
+
+    wishbone_bus iwishbone_bus_if0(
+		.clk(clk),
+		.rst(rst),
+		/*ctrl*/
+		.stall_i(stall),
+		.flush_i(flush),
+		/*CPU*/
+		.cpu_ce_i(rom_ce),
+		.cpu_data_i(32'h00000000),
+		.cpu_addr_i(if_pc),
+		.cpu_we_i(1'b0),
+		.cpu_sel_i(4'b1111),
+		.cpu_data_o(if_inst),
+		/*Wishbone*/
+		.wishbone_data_i(iwishbone_data_i),
+		.wishbone_ack_i(iwishbone_ack_i),
+		.wishbone_addr_o(iwishbone_addr_o),
+		.wishbone_data_o(iwishbone_data_o),
+		.wishbone_we_o(iwishbone_we_o),
+		.wishbone_sel_o(iwishbone_sel_o),
+		.wishbone_stb_o(iwishbone_stb_o),
+		.wishbone_cyc_o(iwishbone_cyc_o),
+
+		.stallreq(stallreq_from_if)
+    );
+
+    wishbone_bus iwishbone_bus_mem0(
+		.clk(clk),
+		.rst(rst),
+		/*ctrl*/
+		.stall_i(stall),
+		.flush_i(flush),
+		/*CPU*/
+		.cpu_ce_i(ram_ce_o),
+		.cpu_data_i(ram_wdata_o),
+		.cpu_addr_i(ram_addr_o),
+		.cpu_we_i(ram_we_o),
+		.cpu_sel_i(ram_sel_o),
+		.cpu_data_o(ram_data_i),
+		/*Wishbone*/
+		.wishbone_data_i(dwishbone_data_i),
+		.wishbone_ack_i(dwishbone_ack_i),
+		.wishbone_addr_o(dwishbone_addr_o),
+		.wishbone_data_o(dwishbone_data_o),
+		.wishbone_we_o(dwishbone_we_o),
+		.wishbone_sel_o(dwishbone_sel_o),
+		.wishbone_stb_o(dwishbone_stb_o),
+		.wishbone_cyc_o(dwishbone_cyc_o),
+
+		.stallreq(stallreq_from_mem)
     );
 endmodule
 
