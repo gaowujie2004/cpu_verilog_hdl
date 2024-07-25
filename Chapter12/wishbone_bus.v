@@ -8,7 +8,7 @@
  * 有限状态机实现总线接口模块，一共3个状态。
  * 状态改变是存储器+组合逻辑+输入、状态输出是纯组合逻辑电路
 */
-module wb_bus (
+module wishbone_bus (
     input wire clk,
     input wire rst,
     /*CTRL*/
