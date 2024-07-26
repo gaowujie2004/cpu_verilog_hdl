@@ -93,6 +93,8 @@ module wishbone_bus (
 						wishbone_we_o <= `WriteDisable;
 						wishbone_sel_o <=  4'b0000;
 						read_data_buf <= `ZeroWord;
+					end else begin
+						//继续处于BUSY状态
 					end
 				end
 
@@ -100,6 +102,8 @@ module wishbone_bus (
 				`WB_WAIT_FOR_STALL: begin
 					if(stall_i == 6'b000000) begin
 						wishbone_state <= `WB_IDLE;
+					end else begin
+						//继续WAIT_FOR_STALL状态
 					end
 				end
 			endcase
@@ -148,7 +152,7 @@ module wishbone_bus (
 					end
 				end
 
-                // 此时的Wishbone总线访问已经结束
+                // 此时的Wishbone总线访问已经结束，但是还有其他的流水线暂停
 				`WB_WAIT_FOR_STALL: begin
 					stallreq <= `NotStop;
 					cpu_data_o <= read_data_buf;
